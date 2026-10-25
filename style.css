@@ -594,3 +594,33 @@ input[type="text"] {
 .bs-boom { background: radial-gradient(circle, #fff3b0, #f2a33a 45%, rgba(212, 81, 58, .8) 70%, transparent 72%); }
 .bs-buttons { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 6px; }
 .bs-wait { color: var(--muted); text-align: center; padding: 30px 0; }
+
+/* =====================================================================
+   Sternhalma
+   ===================================================================== */
+:root { --m4: #a06bd6; --m5: #ef8b3a; }
+.seat-color.m4 { background: var(--m4); } .seat-color.m5 { background: var(--m5); }
+.art-halma svg { width: 58px; height: 58px; }
+.art-halma polygon { fill: var(--wood); opacity: .9; }
+.art-halma .a { fill: var(--m0); } .art-halma .b { fill: var(--m3); } .art-halma .c { fill: var(--m2); } .art-halma .d { fill: var(--m1); }
+.bboard.g-halma { aspect-ratio: 17.6 / 15.6; max-width: min(100%, calc((100dvh - 270px) * 17.6 / 15.6)); }
+.g-halma > svg .star { fill: var(--wood); stroke: var(--wood-ink); stroke-width: 0.06; stroke-linejoin: round; }
+.g-halma > svg .hole { fill: #8f6b3e; }
+.g-halma > svg .hole.home, .g-halma > svg .hole.goal { stroke-width: 0.07; }
+.g-halma > svg .hole.home.m0, .g-halma > svg .hole.goal.m0 { stroke: var(--m0); }
+.g-halma > svg .hole.home.m1, .g-halma > svg .hole.goal.m1 { stroke: var(--m1); }
+.g-halma > svg .hole.home.m2, .g-halma > svg .hole.goal.m2 { stroke: var(--m2); }
+.g-halma > svg .hole.home.m3, .g-halma > svg .hole.goal.m3 { stroke: var(--m3); }
+.g-halma > svg .hole.home.m4, .g-halma > svg .hole.goal.m4 { stroke: var(--m4); }
+.g-halma > svg .hole.home.m5, .g-halma > svg .hole.goal.m5 { stroke: var(--m5); }
+.g-halma > svg .hole.goal { stroke-dasharray: 0.12 0.08; }
+.hpeg { box-shadow: 0 2px 0 rgba(0, 0, 0, .45), inset 0 -2px 0 rgba(0, 0, 0, .2); }
+.hpeg.m0 { background: radial-gradient(circle at 35% 30%, #fff1c2, var(--m0) 55%, #a87a12); }
+.hpeg.m1 { background: radial-gradient(circle at 35% 30%, #c8f0d4, var(--m1) 55%, #276b3d); }
+.hpeg.m2 { background: radial-gradient(circle at 35% 30%, #fbc2b5, var(--m2) 55%, #8a2716); }
+.hpeg.m3 { background: radial-gradient(circle at 35% 30%, #cfe0fb, var(--m3) 55%, #1f4d93); }
+.hpeg.m4 { background: radial-gradient(circle at 35% 30%, #e6d2fa, var(--m4) 55%, #5b2f8c); }
+.hpeg.m5 { background: radial-gradient(circle at 35% 30%, #ffd9b5, var(--m5) 55%, #a1520f); }
+
+.bplayers.many .tag { display: none; }
+.bplayers.many .pname { font-size: 12px; }

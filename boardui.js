@@ -559,6 +559,7 @@ const BoardUI = (function () {
     const st = disp || bs.state;
     const cur = animating ? -1 : G().current(bs.state);
     const n = bs.seats.length;
+    $("bplayers").classList.toggle("many", n > 4);
     $("bplayers").innerHTML = bs.seats.map((s, i) => {
       let info = "";
       if (bs.gid === "muehle") info = st.hand[i] ? `${st.hand[i]} zu setzen · ${st.onBoard[i]} am Brett` : `${st.onBoard[i]} Steine am Brett`;
