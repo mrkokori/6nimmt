@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://0.peerjs.com wss://0.peerjs.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+<title>6 nimmt</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#1d2740">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="6 nimmt">
+</head>
+<body>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="ox" viewBox="0 0 24 24">
+    <path d="M2 4c1 3 3 4.5 6 4.6C9 7.6 10.4 7 12 7s3 .6 4 1.6c3-.1 5-1.6 6-4.6-.2 3.4-1.8 6-4.6 6.9L17 15c-.4 2.6-2.4 5-5 5s-4.6-2.4-5-5l-.4-4.1C3.8 10 2.2 7.4 2 4z"/>
+  </symbol>
+</svg>
+
+<!-- Startseite -->
+<section id="screen-home" class="screen">
+  <div class="home-hero">
+    <div class="hero-row" aria-hidden="true">
+      <span class="hero-card b1">12</span><span class="hero-card b3">30</span><span class="hero-card b1">41</span><span class="hero-card b5">55</span><span class="hero-card b2">65</span><span class="hero-slot">6</span>
+    </div>
+    <h1>6 nimmt</h1>
+    <p class="tagline">Wer die sechste Karte legt, kassiert die Reihe. Wenigste Hornochsen gewinnt.</p>
+  </div>
+  <div class="home-actions">
+    <button type="button" class="big-btn hidden" id="resume-btn">Partie fortsetzen</button>
+    <button type="button" class="big-btn primary" data-go="setup-bots">Gegen Computer</button>
+    <button type="button" class="big-btn" data-go="setup-hotseat">Mehrere an einem Handy</button>
+    <button type="button" class="big-btn" data-go="setup-online">Online mit Freunden</button>
+  </div>
+  <nav class="home-links">
+    <button type="button" class="link-btn" data-go="rules">Regeln</button>
+    <button type="button" class="link-btn" data-go="stats">Statistik</button>
+    <button type="button" class="link-btn" data-go="settings">Einstellungen</button>
+  </nav>
+  <div id="update-banner" class="banner hidden" role="status">
+    <span>Neue Version verfügbar.</span>
+    <button type="button" id="update-reload-btn" class="small-btn">Neu laden</button>
+  </div>
+</section>
+
+<!-- Gegen Computer -->
+<section id="screen-setup-bots" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Gegen Computer</h2></header>
+  <div class="form">
+    <label class="field">Dein Name<input type="text" id="bots-name" maxlength="20" autocomplete="nickname"></label>
+    <div class="field">Gegner
+      <div class="stepper"><button type="button" class="step-btn" data-step="bots-count" data-delta="-1" aria-label="Weniger">−</button><output id="bots-count">4</output><button type="button" class="step-btn" data-step="bots-count" data-delta="1" aria-label="Mehr">+</button></div>
+    </div>
+    <div class="field">Stärke
+      <div class="segmented" id="bots-level">
+        <button type="button" data-value="easy">Leicht</button>
+        <button type="button" data-value="normal" class="on">Normal</button>
+        <button type="button" data-value="hard">Schwer</button>
+      </div>
+    </div>
+    <div class="field">Spielende bei
+      <div class="segmented" id="bots-target">
+        <button type="button" data-value="33">33</button>
+        <button type="button" data-value="66" class="on">66</button>
+        <button type="button" data-value="99">99</button>
+      </div>
+    </div>
+    <button type="button" class="big-btn primary" id="bots-start">Los geht's</button>
+  </div>
+</section>
+
+<!-- Am selben Handy -->
+<section id="screen-setup-hotseat" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Mehrere an einem Handy</h2></header>
+  <div class="form">
+    <p class="hint">Jeder wählt seine Karte verdeckt, dann wird das Handy weitergegeben. Computergegner kannst du dazunehmen.</p>
+    <ol class="seat-list" id="hotseat-list"></ol>
+    <div class="row-btns">
+      <button type="button" class="small-btn" id="hotseat-add-human">+ Mensch</button>
+      <button type="button" class="small-btn" id="hotseat-add-bot">+ Computer</button>
+    </div>
+    <div class="field">Spielende bei
+      <div class="segmented" id="hotseat-target">
+        <button type="button" data-value="33">33</button>
+        <button type="button" data-value="66" class="on">66</button>
+        <button type="button" data-value="99">99</button>
+      </div>
+    </div>
+    <button type="button" class="big-btn primary" id="hotseat-start">Los geht's</button>
+  </div>
+</section>
+
+<!-- Online -->
+<section id="screen-setup-online" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Online mit Freunden</h2></header>
+  <div class="form">
+    <label class="field">Dein Name<input type="text" id="online-name" maxlength="20" autocomplete="nickname"></label>
+    <button type="button" class="big-btn primary" id="online-host">Raum erstellen</button>
+    <div class="or">oder</div>
+    <label class="field">Raumcode<input type="text" id="online-code" maxlength="5" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="z. B. K7QPM"></label>
+    <button type="button" class="big-btn" id="online-join">Beitreten</button>
+    <p class="hint">Die Handys verbinden sich direkt miteinander. Wer den Raum erstellt, muss die App offen lassen, bis die Partie vorbei ist.</p>
+    <p class="error hidden" id="online-error" role="alert"></p>
+  </div>
+</section>
+
+<!-- Online-Lobby -->
+<section id="screen-lobby" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" id="lobby-leave" aria-label="Raum verlassen">‹</button><h2>Raum <span id="lobby-code"></span></h2></header>
+  <div class="form">
+    <div id="lobby-share" class="share hidden">
+      <div id="lobby-qr" class="qr"></div>
+      <p class="hint">Code weitergeben oder QR-Code scannen lassen.</p>
+      <button type="button" class="small-btn" id="lobby-copy">Link kopieren</button>
+    </div>
+    <ol class="seat-list" id="lobby-list"></ol>
+    <div class="row-btns host-only hidden">
+      <button type="button" class="small-btn" id="lobby-add-bot">+ Computer</button>
+      <div class="segmented compact" id="lobby-target">
+        <button type="button" data-value="33">33</button>
+        <button type="button" data-value="66" class="on">66</button>
+        <button type="button" data-value="99">99</button>
+      </div>
+    </div>
+    <p class="hint" id="lobby-status"></p>
+    <button type="button" class="big-btn primary host-only hidden" id="lobby-start">Partie starten</button>
+  </div>
+</section>
+
+<!-- Spieltisch -->
+<section id="screen-game" class="screen hidden">
+  <header class="game-bar">
+    <button type="button" class="back-btn" id="game-menu-btn" aria-label="Menü">≡</button>
+    <span id="game-info"></span>
+    <span id="conn-info" class="conn"></span>
+  </header>
+  <ul class="players" id="players"></ul>
+  <div class="board" id="board"></div>
+  <div class="trick" id="trick" aria-live="polite"></div>
+  <p class="status" id="status" aria-live="polite"></p>
+  <div class="hand" id="hand"></div>
+  <div class="hand-actions">
+    <button type="button" class="big-btn primary" id="play-btn" disabled>Karte wählen</button>
+  </div>
+</section>
+
+<!-- Regeln -->
+<section id="screen-rules" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Regeln</h2></header>
+  <div class="prose">
+    <p>Im Spiel sind die Karten 1 bis 104. Jede Karte trägt Hornochsen, das sind Strafpunkte:</p>
+    <ul class="bull-legend">
+      <li><span class="mini-card b1">7</span> normale Karte, 1 Hornochse</li>
+      <li><span class="mini-card b2">25</span> endet auf 5, 2 Hornochsen</li>
+      <li><span class="mini-card b3">40</span> endet auf 0, 3 Hornochsen</li>
+      <li><span class="mini-card b5">33</span> Schnapszahl, 5 Hornochsen</li>
+      <li><span class="mini-card b7">55</span> die 55, 7 Hornochsen</li>
+    </ul>
+    <p>Jeder bekommt 10 Karten, in der Mitte liegen 4 Reihen mit je einer Karte.</p>
+    <p>In jedem Stich wählen alle gleichzeitig eine Karte. Dann werden die Karten aufgedeckt und von der niedrigsten zur höchsten angelegt: Jede Karte kommt an die Reihe, deren letzte Karte am nächsten darunter liegt.</p>
+    <p>Wer die sechste Karte an eine Reihe legen müsste, nimmt die fünf Karten der Reihe und seine Karte beginnt die Reihe neu.</p>
+    <p>Ist eine Karte niedriger als alle Reihenenden, wählt ihr Spieler eine Reihe, nimmt sie und beginnt sie mit seiner Karte neu.</p>
+    <p>Nach 10 Stichen werden die Hornochsen gezählt und neu ausgeteilt. Sobald jemand 66 oder mehr hat, endet die Partie. Es gewinnt, wer die wenigsten Hornochsen hat.</p>
+    <p class="small">Inoffizielle Fan-Umsetzung. „6 nimmt!“ ist ein Spiel von Wolfgang Kramer, erschienen bei AMIGO.</p>
+  </div>
+</section>
+
+<!-- Statistik -->
+<section id="screen-stats" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Statistik</h2></header>
+  <div class="form" id="stats-body"></div>
+</section>
+
+<!-- Einstellungen -->
+<section id="screen-settings" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Einstellungen</h2></header>
+  <div class="form">
+    <label class="field">Dein Name<input type="text" id="settings-name" maxlength="20" autocomplete="nickname"></label>
+    <div class="field">Tempo der Animation
+      <div class="segmented" id="settings-speed">
+        <button type="button" data-value="slow">Gemütlich</button>
+        <button type="button" data-value="normal" class="on">Normal</button>
+        <button type="button" data-value="fast">Schnell</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="settings-hints" checked> Zeigen, wo eine Karte landen würde</label>
+    <label class="check"><input type="checkbox" id="settings-vibrate" checked> Vibrieren, wenn ich am Zug bin</label>
+    <button type="button" class="small-btn danger" id="settings-reset-stats">Statistik zurücksetzen</button>
+  </div>
+</section>
+
+<!-- Overlays -->
+<div id="cover" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cover-title">
+  <div class="cover-box">
+    <p class="cover-lead">Gib das Handy an</p>
+    <h2 id="cover-title"></h2>
+    <button type="button" class="big-btn primary" id="cover-btn">Meine Karten zeigen</button>
+  </div>
+</div>
+
+<div id="modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script src="engine.js"></script>
+<script src="lib/qrcode.js"></script>
+<script src="lib/peerjs.min.js"></script>
+<script src="net.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

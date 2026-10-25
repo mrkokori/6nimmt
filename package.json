@@ -1,0 +1,13 @@
+{
+  "name": "6-nimmt",
+  "private": true,
+  "description": "6 nimmt als Browserspiel – gegen Computer, am selben Handy oder online",
+  "scripts": {
+    "test": "node tests/engine.test.js",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "peer": "^1.0.2"
+  }
+}
