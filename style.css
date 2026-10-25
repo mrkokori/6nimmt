@@ -243,6 +243,11 @@ input[type="text"] {
 .hand .card .hint-tag.low { background: var(--card-ink); color: var(--card); }
 .hand-actions { padding-bottom: 2px; }
 
+/* fliegende Kartenkopien (Position kommt aus JavaScript) */
+.flyer { position: fixed; z-index: 15; margin: 0; pointer-events: none; will-change: transform; }
+.invisible { visibility: hidden; }
+.trick-item .card { backface-visibility: hidden; }
+
 /* ---------- Overlays ---------- */
 .overlay { position: fixed; inset: 0; z-index: 20; background: rgba(15, 20, 34, .82); display: grid; place-items: center; padding: 20px; }
 #cover { background: var(--table); }

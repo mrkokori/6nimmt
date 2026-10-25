@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.1";
+const APP_VERSION = "2026.10.25.2";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
@@ -167,18 +167,18 @@ function renderGame() {
     for (let k = 0; k < 6; k++) {
       if (k < row.length) {
         const isNew = ui.highlight && ui.highlight.row === r && ui.highlight.card === row[k];
-        cells += cardHTML(row[k], (isNew ? "new " : "") + (k === row.length - 1 && isNew ? "last" : ""));
+        cells += cardHTML(row[k], (isNew ? (motionOn() ? "" : "new ") : "") + (k === row.length - 1 && isNew ? "last" : ""), "div", `data-c="${row[k]}"`);
       } else cells += k === 5 ? '<div class="slot six" aria-hidden="true">6</div>' : '<div class="slot" aria-hidden="true"></div>';
     }
     const attrs = myRowChoice ? ` role="button" tabindex="0" data-row="${r}" aria-label="Reihe ${r + 1} nehmen, ${bulls} Hornochsen"` : "";
-    return `<div class="${cls}"${attrs}>${cells}<div class="row-bulls">${oxSvg}${bulls}</div></div>`;
+    return `<div class="${cls}" data-r="${r}"${attrs}>${cells}<div class="row-bulls">${oxSvg}${bulls}</div></div>`;
   }).join("");
 
   // Aufgedeckte Karten des Stichs
   const showTrick = v.revealed && v.revealed.length && v.phase !== "select";
   $("trick").innerHTML = showTrick ? v.revealed.map((p, k) => {
     const cls = k < ui.trickPos ? "done" : (k === ui.trickPos ? "current" : "");
-    return `<div class="trick-item ${cls}">${cardHTML(p.card)}<span class="who">${esc(v.players[p.seat].name)}</span></div>`;
+    return `<div class="trick-item ${cls}" data-card="${p.card}">${cardHTML(p.card)}<span class="who">${esc(v.players[p.seat].name)}</span></div>`;
   }).join("") : "";
 
   // Status
@@ -212,6 +212,12 @@ function renderGame() {
     const picked = c === ui.picked || c === v.mySelection;
     return cardHTML(c, picked ? "picked" : "", "button", `type="button" data-card="${c}" ${meSel ? "" : "disabled"}`).replace("</button>", tag + "</button>");
   }).join("");
+
+  const dealKey = `${v.round}-${ui.mySeat}`;
+  if (cards.length === 10 && v.phase === "select" && !ui.animating && ui.dealtKey !== dealKey) {
+    ui.dealtKey = dealKey;
+    fx.deal();
+  }
 
   // Knopf
   const btn = $("play-btn");
@@ -266,6 +272,89 @@ function rowClick(e) {
 $("board").addEventListener("click", rowClick);
 $("board").addEventListener("keydown", rowClick);
 
+// ---------- Kartenbewegungen ----------
+// Mit der Web Animations API (kein style-Attribut, daher CSP-tauglich).
+const motionOn = () => !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) && typeof Element.prototype.animate === "function";
+const dur = (ms) => ms * SPEED[settings.speed || "normal"];
+
+const fx = {
+  // Kopie einer Karte an fester Position über allem anlegen
+  ghost(el) {
+    const r = el.getBoundingClientRect();
+    const g = el.cloneNode(true);
+    g.classList.add("flyer");
+    g.classList.remove("picked", "new", "last");
+    Object.assign(g.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
+    document.body.appendChild(g);
+    return { g, r };
+  },
+  // Vorher angelegte Kopie zum Ziel fliegen lassen; Ziel bleibt bis dahin unsichtbar
+  async flyGhost(g, r, toEl, ms) {
+    const t = toEl.getBoundingClientRect();
+    toEl.classList.add("invisible");
+    const dx = t.left - r.left, dy = t.top - r.top, s = t.width / r.width;
+    const anim = g.animate([
+      { transform: "translate(0,0) scale(1)", boxShadow: "0 2px 0 rgba(0,0,0,.3)" },
+      { transform: `translate(${dx * 0.55}px, ${dy * 0.55 - 26}px) scale(${((1 + s) / 2) * 1.12}) rotate(-4deg)`, boxShadow: "0 18px 26px rgba(0,0,0,.45)", offset: 0.55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${s})`, boxShadow: "0 2px 0 rgba(0,0,0,.3)" }
+    ], { duration: dur(ms), easing: "cubic-bezier(.3,.7,.3,1)", fill: "forwards" });
+    try { await anim.finished; } catch (e) {}
+    toEl.classList.remove("invisible");
+    g.remove();
+  },
+  // Genommene Reihe: Karten nacheinander zum Spieler fliegen lassen
+  async collect(ghosts, chip, ms) {
+    if (!ghosts.length) return;
+    const t = chip ? chip.getBoundingClientRect() : null;
+    const anims = ghosts.map(({ g, r }, i) => {
+      const dx = t ? t.left + t.width / 2 - (r.left + r.width / 2) : 0;
+      const dy = t ? t.top + t.height / 2 - (r.top + r.height / 2) : -200;
+      return g.animate([
+        { transform: "translate(0,0) scale(1) rotate(0)", opacity: 1 },
+        { transform: `translate(${dx * 0.15}px, ${dy * 0.15 - 14}px) scale(1.06) rotate(${i % 2 ? 6 : -6}deg)`, opacity: 1, offset: 0.25 },
+        { transform: `translate(${dx}px, ${dy}px) scale(.25) rotate(${i % 2 ? 20 : -20}deg)`, opacity: 0.2 }
+      ], { duration: dur(ms), delay: dur(i * 70), easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" });
+    });
+    try { await Promise.all(anims.map((a) => a.finished)); } catch (e) {}
+    ghosts.forEach(({ g }) => g.remove());
+    if (chip && motionOn()) chip.animate([{ transform: "scale(1)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: dur(380), easing: "ease-out" });
+  },
+  // Aufgedeckte Karten nacheinander umdrehen
+  reveal(fromHand) {
+    if (!motionOn()) return;
+    const items = [...document.querySelectorAll("#trick .trick-item")];
+    items.forEach((el, i) => {
+      const card = el.querySelector(".card");
+      if (fromHand && Number(el.dataset.card) === fromHand.card) {
+        // eigene Karte fliegt aus der Hand in die Reihe der Aufgedeckten
+        const t = card.getBoundingClientRect();
+        const dx = fromHand.r.left - t.left, dy = fromHand.r.top - t.top, s = fromHand.r.width / t.width;
+        card.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transform: "none" }],
+          { duration: dur(420), easing: "cubic-bezier(.3,.7,.3,1)" });
+        return;
+      }
+      card.animate([
+        { transform: "perspective(400px) rotateY(90deg)", filter: "brightness(.4)" },
+        { transform: "perspective(400px) rotateY(0)", filter: "none" }
+      ], { duration: dur(300), delay: dur(120 + i * 110), easing: "ease-out", fill: "backwards" });
+    });
+  },
+  // Neue Hand austeilen
+  deal() {
+    if (!motionOn()) return;
+    const board = $("board").getBoundingClientRect();
+    const cx = board.left + board.width / 2, cy = board.top + board.height / 2;
+    [...document.querySelectorAll("#hand .card")].forEach((el, i) => {
+      const r = el.getBoundingClientRect();
+      const dx = cx - (r.left + r.width / 2), dy = cy - (r.top + r.height / 2);
+      el.animate([
+        { transform: `translate(${dx}px, ${dy}px) scale(.35) rotate(${(i % 3 - 1) * 12}deg)`, opacity: 0 },
+        { transform: "none", opacity: 1 }
+      ], { duration: dur(420), delay: dur(i * 55), easing: "cubic-bezier(.2,.8,.3,1)", fill: "backwards" });
+    });
+  }
+};
+
 // Ereignisse nacheinander abspielen; danach die mitgeschickte Endansicht zeigen
 let animChain = Promise.resolve();
 function queueAnimation(events, finalView, after) {
@@ -286,27 +375,46 @@ async function playEvents(events, finalView) {
     if (ev.type === "reveal") {
       v.phase = "resolving";
       v.revealed = ev.plays;
-      if (v.mySelection !== null) v.hand = v.hand.filter((c) => c !== v.mySelection);
+      const mine = ev.plays.filter((p) => p.seat === ui.mySeat).map((p) => p.card);
+      v.hand = v.hand.filter((c) => c !== v.mySelection && !mine.includes(c));
       v.mySelection = null;
       v.players.forEach((p) => { p.selected = false; });
+      const handCard = document.querySelector("#hand .card.picked");
+      const fromHand = handCard && motionOn() ? { card: Number(handCard.dataset.card), r: handCard.getBoundingClientRect() } : null;
       ui.view = v; ui.trickPos = 0; ui.highlight = null; ui.picked = null;
       renderGame();
-      await sleep(1000);
+      fx.reveal(fromHand);
+      await sleep(600 + v.revealed.length * 110);
     } else if (ev.type === "place") {
       v.rows = ev.rows;
       v.players.forEach((p, i) => { p.roundPenalty = ev.roundPenalty[i]; });
       ui.trickPos = v.revealed.findIndex((p) => p.card === ev.card);
       ui.highlight = { row: ev.row, card: ev.card, took: !!ev.took };
       v.phase = "resolving"; v.pending = null;
+      // Vor dem Neuzeichnen: Quelle (aufgedeckte Karte) und genommene Reihe merken
+      const src = document.querySelector(`#trick .trick-item[data-card="${ev.card}"] .card`);
+      const srcGhost = src && motionOn() ? fx.ghost(src) : null;
+      const takenGhosts = ev.took && motionOn()
+        ? [...document.querySelectorAll(`#board .row[data-r="${ev.row}"] .card`)].map((el) => fx.ghost(el)) : [];
       renderGame();
+      const target = document.querySelector(`#board .row[data-r="${ev.row}"] .card[data-c="${ev.card}"]`);
+      if (target && srcGhost) target.classList.add("invisible");
+      else if (srcGhost) srcGhost.g.remove();
       if (ev.took) {
         const who = ev.seat === ui.mySeat && session.mode !== "hotseat" ? "Du nimmst" : `${v.players[ev.seat].name} nimmt`;
         const bulls = E.sumBulls(ev.took);
         toast(`${who} ${ev.took.length} Karte${ev.took.length > 1 ? "n" : ""}: +${bulls}`);
         const chip = document.querySelector(`.player[data-seat="${ev.seat}"]`);
         if (chip) chip.classList.add("flash");
-        await sleep(1500);
-      } else await sleep(650);
+        if (motionOn()) await fx.collect(takenGhosts, chip, 650);
+      }
+      if (srcGhost && target) {
+        const trickCard = document.querySelector(`#trick .trick-item[data-card="${ev.card}"] .card`);
+        if (trickCard) trickCard.classList.add("invisible");
+        await fx.flyGhost(srcGhost.g, srcGhost.r, target, 460);
+        if (trickCard) trickCard.classList.remove("invisible");
+        await sleep(ev.took ? 500 : 180);
+      } else await sleep(ev.took ? 1500 : 650);
       ui.trickPos += 1;
     } else if (ev.type === "needRow") {
       ui.trickPos = v.revealed.findIndex((p) => p.card === ev.card);
