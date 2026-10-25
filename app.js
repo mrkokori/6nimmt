@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.5";
+const APP_VERSION = "2026.10.25.6";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
@@ -29,6 +29,21 @@ function clientId() {
   if (!id) { id = Net.randomCode() + Net.randomCode(); store.set("sn6.clientId", id); }
   return id;
 }
+
+// ---------- Fehlerprotokoll ----------
+// Die letzten Fehler bleiben lokal gespeichert und lassen sich unter
+// Einstellungen kopieren – damit Probleme auf echten Handys nachvollziehbar sind.
+function logError(where, err) {
+  try {
+    const list = store.get("sn6.log", []);
+    const text = err && (err.stack || err.message) ? String(err.stack || err.message) : String(err);
+    list.push({ at: new Date().toISOString(), v: APP_VERSION, where, text: text.slice(0, 600) });
+    store.set("sn6.log", list.slice(-30));
+  } catch (e) {}
+  try { console.error(where, err); } catch (e) {}
+}
+window.addEventListener("error", (e) => logError("Fehler", e.error || e.message));
+window.addEventListener("unhandledrejection", (e) => logError("Promise", e.reason));
 
 // ---------- Hilfen ----------
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -294,6 +309,17 @@ $("board").addEventListener("keydown", rowClick);
 const motionOn = () => !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) && typeof Element.prototype.animate === "function";
 const dur = (ms) => ms * SPEED[settings.speed || "normal"];
 
+// Auf eine Animation warten, aber nie länger als nötig: Ist die Seite kurz
+// unsichtbar (Bildschirm aus), pausieren Browser Animationen und "finished"
+// kommt erst viel später oder nie – dann hinge das ganze Spiel.
+function settle(promise, ms) {
+  return Promise.race([
+    Promise.resolve(promise).catch(() => {}),
+    new Promise((r) => setTimeout(r, dur(ms) + 600))
+  ]);
+}
+const pageHidden = () => document.visibilityState === "hidden";
+
 const fx = {
   // Kopie einer Karte an fester Position über allem anlegen
   ghost(el) {
@@ -315,7 +341,8 @@ const fx = {
       { transform: `translate(${dx * 0.55}px, ${dy * 0.55 - 26}px) scale(${((1 + s) / 2) * 1.12}) rotate(-4deg)`, boxShadow: "0 18px 26px rgba(0,0,0,.45)", offset: 0.55 },
       { transform: `translate(${dx}px, ${dy}px) scale(${s})`, boxShadow: "0 2px 0 rgba(0,0,0,.3)" }
     ], { duration: dur(ms), easing: "cubic-bezier(.3,.7,.3,1)", fill: "forwards" });
-    try { await anim.finished; } catch (e) {}
+    await settle(anim.finished, ms);
+    try { anim.cancel(); } catch (e) {}
     toEl.classList.remove("invisible");
     g.remove();
   },
@@ -332,7 +359,8 @@ const fx = {
         { transform: `translate(${dx}px, ${dy}px) scale(.25) rotate(${i % 2 ? 20 : -20}deg)`, opacity: 0.2 }
       ], { duration: dur(ms), delay: dur(i * 130), easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" });
     });
-    try { await Promise.all(anims.map((a) => a.finished)); } catch (e) {}
+    await settle(Promise.all(anims.map((a) => a.finished)), ms + ghosts.length * 130);
+    anims.forEach((a) => { try { a.cancel(); } catch (e) {} });
     ghosts.forEach(({ g }) => g.remove());
     if (chip && motionOn()) chip.animate([{ transform: "scale(1)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: dur(380), easing: "ease-out" });
   },
@@ -375,13 +403,23 @@ const fx = {
 // Ereignisse nacheinander abspielen; danach die mitgeschickte Endansicht zeigen
 let animChain = Promise.resolve();
 function queueAnimation(events, finalView, after) {
-  animChain = animChain.then(() => playEvents(events, finalView)).then(() => { if (after) after(); }).catch((err) => console.error(err));
+  animChain = animChain
+    .then(() => playEvents(events, finalView))
+    .catch((err) => {
+      logError("Animation", err);
+      // Notbremse: Endstand ohne Animation zeigen
+      document.querySelectorAll(".flyer").forEach((g) => g.remove());
+      ui.view = finalView; ui.animating = false; ui.caption = ""; ui.preRow = null; ui.highlight = null; ui.trickPos = -1;
+      try { renderGame(); } catch (e) { logError("Anzeige", e); }
+    })
+    .then(() => { if (after) after(); })
+    .catch((err) => logError("Nach Animation", err));
   return animChain;
 }
 
 async function playEvents(events, finalView) {
   const visible = !$("screen-game").classList.contains("hidden");
-  if (!visible || !ui.view || !events || !events.length) {
+  if (!visible || !ui.view || !events || !events.length || pageHidden()) {
     ui.view = finalView; ui.highlight = null; ui.trickPos = -1; ui.animating = false;
     if (visible) renderGame();
     return;
@@ -389,6 +427,7 @@ async function playEvents(events, finalView) {
   ui.animating = true;
   const v = clone(ui.view);
   for (const ev of events) {
+    if (pageHidden()) break; // Bildschirm aus: direkt zum Endstand
     if (ev.type === "reveal") {
       v.phase = "resolving";
       v.revealed = ev.plays;
@@ -1071,7 +1110,22 @@ function renderStats() {
     ${by}</div>`;
 }
 
+function renderLog() {
+  const list = store.get("sn6.log", []);
+  $("log-info").textContent = list.length
+    ? `${list.length} Eintrag${list.length > 1 ? "e" : ""}, zuletzt ${new Date(list[list.length - 1].at).toLocaleString("de-AT")}.`
+    : "Keine Fehler aufgezeichnet.";
+  $("log-copy").disabled = !list.length;
+}
+$("log-copy").addEventListener("click", async () => {
+  const list = store.get("sn6.log", []);
+  const text = `6 nimmt ${APP_VERSION} | ${navigator.userAgent}\n` + list.map((l) => `${l.at} [${l.v}] ${l.where}: ${l.text}`).join("\n");
+  try { await navigator.clipboard.writeText(text); toast("Protokoll kopiert", true); }
+  catch (e) { modal("Fehlerprotokoll", `<pre class="log-pre">${esc(text)}</pre>`, [{ label: "Schließen", primary: true }]); }
+});
+
 function renderSettings() {
+  renderLog();
   $("settings-name").value = settings.name;
   setSeg("settings-speed", settings.speed);
   $("settings-hints").checked = settings.hints;

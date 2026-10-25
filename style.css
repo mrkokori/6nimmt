@@ -248,6 +248,8 @@ input[type="text"] {
 .invisible { visibility: hidden; }
 .trick-item .card { backface-visibility: hidden; }
 
+.log-pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; max-height: 50vh; overflow: auto; background: var(--table); padding: 10px; border-radius: 8px; }
+
 /* ---------- Overlays ---------- */
 .overlay { position: fixed; inset: 0; z-index: 20; background: rgba(15, 20, 34, .82); display: grid; place-items: center; padding: 20px; }
 #cover { background: var(--table); }
