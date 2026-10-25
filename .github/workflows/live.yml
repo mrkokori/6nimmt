@@ -8,6 +8,7 @@ on:
       - "tests/live-check.js"
       - ".github/workflows/live.yml"
       - "net.js"
+      - "boardui.js"
 
 jobs:
   live:

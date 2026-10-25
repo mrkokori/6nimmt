@@ -195,6 +195,7 @@ for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame
     await page.click(`[data-game="${gid}"]`);
     await expect(page.locator("#bsetup-title")).toHaveText(label);
     if (gid !== "madn") await page.click('#bsetup-level button[data-value="easy"]');
+    else { test.setTimeout(500000); await page.click('[data-step="bsetup-count"][data-delta="-1"]'); await page.click('[data-step="bsetup-count"][data-delta="-1"]'); }
     await page.click("#bsetup-start");
     await expect(page.locator("#screen-board")).toBeVisible();
     const title = await playBoardToEnd([page], page, gid === "madn" ? 400000 : 240000);

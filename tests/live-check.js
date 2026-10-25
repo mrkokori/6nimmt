@@ -100,6 +100,33 @@ async function waitFor(fn, ms) {
     }, 120000);
     if (played) note("Spielen", `3 Stiche online gespielt in ${Math.round((Date.now() - t) / 1000)} s`);
     else fail("Spielen", "Stiche kamen nicht durch");
+
+    // Brettspiel online: Vier gewinnt bis zum Ende
+    const bh = await open(browser, "Host2"); pages.push(bh);
+    const bg = await open(browser, "Gast2"); pages.push(bg);
+    await bh.click('[data-game="c4"]');
+    await bh.click('#bsetup-mode button[data-value="online"]');
+    await bh.click("#bsetup-start");
+    await bh.click("#online-host");
+    if (!(await waitFor(() => bh.isVisible("#screen-lobby"), 25000))) { fail("Vier gewinnt online", "Raum nicht erstellt"); return; }
+    const code2 = (await bh.textContent("#lobby-code")).trim();
+    await bg.click("#home-join");
+    await bg.fill("#online-code", code2);
+    await bg.click("#online-join");
+    if (!(await waitFor(async () => (await bh.$$("#lobby-list li")).length === 2, 30000))) { fail("Vier gewinnt online", "Gast nicht in der Lobby"); return; }
+    await bh.click("#lobby-start");
+    t = Date.now();
+    const boardStep = async (p) => {
+      if (await p.isVisible("#modal")) return;
+      const cols = await p.$$(".hits .hit.col");
+      if (cols.length) await cols[Math.floor(Math.random() * cols.length)].click({ force: true }).catch(() => {});
+    };
+    const ended = await waitFor(async () => {
+      await Promise.all([boardStep(bh), boardStep(bg)]);
+      return (await bh.isVisible("#modal")) && (await bg.isVisible("#modal"));
+    }, 180000);
+    if (ended) note("Vier gewinnt online", `bis zum Ende gespielt in ${Math.round((Date.now() - t) / 1000)} s: ${await bh.textContent("#modal-title")}`);
+    else fail("Vier gewinnt online", "Partie nicht beendet");
   } catch (e) {
     fail("Ablauf", e.message.split("\n")[0]);
   } finally {
