@@ -87,15 +87,16 @@ document.addEventListener("visibilitychange", () => { if (wantAwake && document.
 
 // ---------- Bildschirme ----------
 function show(name) {
-  keepAwake(name === "lobby" || name === "game");
+  keepAwake(name === "lobby" || name === "game" || name === "board");
   document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== "screen-" + name));
   window.scrollTo(0, 0);
-  if (name === "home") renderHome();
+  if (name === "sechs") renderHome();
   if (name === "setup-bots") $("bots-name").value = settings.name;
   if (name === "setup-hotseat") renderHotseat();
-  if (name === "setup-online") { $("online-name").value = settings.name; $("online-error").classList.add("hidden"); }
+  if (name === "setup-online") { $("online-name").value = settings.name; $("online-error").classList.add("hidden"); renderOnlineSetup(); }
   if (name === "stats") renderStats();
   if (name === "settings") renderSettings();
+  if (typeof BoardUI !== "undefined") BoardUI.onShow(name);
 }
 
 document.addEventListener("click", (e) => {
@@ -109,9 +110,33 @@ document.addEventListener("click", (e) => {
   const step = e.target.closest("[data-step]");
   if (step) {
     const out = $(step.dataset.step);
-    out.value = out.textContent = String(Math.max(1, Math.min(9, Number(out.textContent) + Number(step.dataset.delta))));
+    const min = Number(out.dataset.min || 1), max = Number(out.dataset.max || 9);
+    out.value = out.textContent = String(Math.max(min, Math.min(max, Number(out.textContent) + Number(step.dataset.delta))));
+    out.dispatchEvent(new Event("change", { bubbles: true }));
   }
 });
+// Startseite: Spiel wählen
+let onlineGame = null; // für welches Spiel ein Raum erstellt wird (null = nur beitreten)
+const GAME_NAMES = { sechs: "6 nimmt", madn: "Mensch ärgere dich nicht", muehle: "Mühle", dame: "Dame", c4: "Vier gewinnt" };
+const MAX_PLAYERS = { sechs: 10, madn: 4, muehle: 2, dame: 2, c4: 2 };
+document.addEventListener("click", (e) => {
+  const tile = e.target.closest("[data-game]");
+  if (tile) { if (tile.dataset.game === "sechs") show("sechs"); else BoardUI.openSetup(tile.dataset.game); }
+  if (e.target.closest('#screen-sechs [data-go="setup-online"]')) openOnline("sechs");
+});
+function openOnline(game) {
+  onlineGame = game;
+  show("setup-online");
+}
+$("home-join").addEventListener("click", () => openOnline(null));
+$("online-back").addEventListener("click", () => show(onlineGame === "sechs" ? "sechs" : onlineGame ? "bsetup" : "home"));
+function renderOnlineSetup() {
+  const hosting = !!onlineGame;
+  $("online-title").textContent = hosting ? "Online: " + GAME_NAMES[onlineGame] : "Einem Raum beitreten";
+  $("online-host").classList.toggle("hidden", !hosting);
+  document.querySelector("#screen-setup-online .or").classList.toggle("hidden", !hosting);
+}
+
 const segValue = (id) => $(id).querySelector("button.on").dataset.value;
 function setSeg(id, value) { $(id).querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.value === String(value))); }
 
@@ -737,6 +762,7 @@ function leaveGame() {
   session = null;
   lobby = null;
   ui.view = null;
+  if (typeof BoardUI !== "undefined") BoardUI.reset();
   show("home");
 }
 
@@ -853,7 +879,7 @@ $("online-host").addEventListener("click", () => {
   $("online-host").disabled = true;
   $("online-error").classList.add("hidden");
   const seats = [{ name, kind: "human", connected: true }];
-  lobby = { isHost: true, seats, target: 66, net: null, code: "" };
+  lobby = { isHost: true, seats, target: 66, net: null, code: "", game: onlineGame || "sechs" };
   lobby.net = Net.host({
     onReady(code) {
       $("online-host").disabled = false;
@@ -868,6 +894,7 @@ $("online-host").addEventListener("click", () => {
       lobby.netStatus = s;
       if (!$("screen-lobby").classList.contains("hidden")) renderLobby();
       if (session && session.mode === "online") $("conn-info").textContent = s === "ok" ? "Raum " + lobby.code : "Raum wird neu angemeldet …";
+      if (typeof BoardUI !== "undefined") BoardUI.netStatus(s);
     },
     onError(text) { $("online-host").disabled = false; onlineError(text); }
   });
@@ -875,6 +902,7 @@ $("online-host").addEventListener("click", () => {
 });
 
 function hostMessage(peerId, msg) {
+  if (typeof BoardUI !== "undefined" && BoardUI.hostMessage(peerId, msg)) return;
   if (msg.t === "hello") {
     const name = String(msg.name || "Gast").slice(0, 20);
     const cid = String(msg.clientId || "").slice(0, 40);
@@ -890,7 +918,8 @@ function hostMessage(peerId, msg) {
       return;
     }
     if (seat < 0) {
-      if (seats.length >= 10) { lobby.net.send(peerId, { t: "error", text: "Der Raum ist voll (10 Spieler)." }); return; }
+      const max = MAX_PLAYERS[lobby.game] || 10;
+      if (seats.length >= max) { lobby.net.send(peerId, { t: "error", text: `Der Raum ist voll (${max} Spieler).` }); return; }
       seats.push({ name, kind: "remote", clientId: cid, peerId, connected: true });
     } else Object.assign(seats[seat], { peerId, connected: true, name });
     renderLobby();
@@ -903,6 +932,7 @@ function hostMessage(peerId, msg) {
 }
 
 function hostLeave(peerId) {
+  if (typeof BoardUI !== "undefined" && BoardUI.hostLeave(peerId)) return;
   if (session && session.mode === "online") {
     const s = session.seats.find((x) => x.kind === "remote" && x.peerId === peerId);
     if (s) { s.connected = false; ui.meta = seatMeta(); renderGame(); toast(`${s.name} hat die Verbindung verloren`, true); broadcast([]); }
@@ -915,12 +945,16 @@ function hostLeave(peerId) {
 }
 
 function lobbyPayload() {
-  return { t: "lobby", code: lobby.code, target: lobby.target, players: lobby.seats.map((s) => ({ name: s.name, kind: s.kind, level: s.level, connected: s.connected !== false })) };
+  return { t: "lobby", game: lobby.game, code: lobby.code, target: lobby.target, players: lobby.seats.map((s) => ({ name: s.name, kind: s.kind, level: s.level, connected: s.connected !== false })) };
 }
 
 function renderLobby() {
   const isHost = lobby.isHost;
+  const game = lobby.game || "sechs";
+  const max = MAX_PLAYERS[game] || 10;
   $("lobby-code").textContent = lobby.code;
+  $("lobby-game").textContent = GAME_NAMES[game] || "";
+  $("lobby-target").classList.toggle("hidden", game !== "sechs");
   document.querySelectorAll("#screen-lobby .host-only").forEach((el) => el.classList.toggle("hidden", !isHost));
   $("lobby-share").classList.toggle("hidden", !isHost);
   const players = isHost ? lobbyPayload().players : lobby.players || [];
@@ -941,13 +975,13 @@ function renderLobby() {
     }
     setSeg("lobby-target", lobby.target);
     $("lobby-start").disabled = lobby.seats.length < 2;
-    $("lobby-add-bot").disabled = lobby.seats.length >= 10;
+    $("lobby-add-bot").disabled = lobby.seats.length >= max;
     $("lobby-status").textContent = lobby.netStatus === "reconnecting"
       ? "Raum wird beim Vermittlungsserver neu angemeldet …"
       : lobby.seats.length < 2 ? "Warte auf Mitspieler … Lass die App dabei offen und den Bildschirm an." : `${lobby.seats.length} Spieler bereit.`;
     lobby.seats.forEach((s) => { if (s.kind === "remote" && s.connected) lobby.net.send(s.peerId, lobbyPayload()); });
   } else {
-    $("lobby-status").textContent = `Warte, bis ${players[0] ? players[0].name : "der Host"} die Partie startet. Spielende bei ${lobby.target}.`;
+    $("lobby-status").textContent = `Warte, bis ${players[0] ? players[0].name : "der Host"} die Partie startet.` + (game === "sechs" ? ` Spielende bei ${lobby.target}.` : "");
   }
 }
 
@@ -969,22 +1003,25 @@ $("lobby-target").addEventListener("change", () => { lobby.target = Number(segVa
 $("lobby-copy").addEventListener("click", async () => {
   const link = joinLink(lobby.code);
   try {
-    if (navigator.share) await navigator.share({ title: "6 nimmt", text: "Spiel mit! Raumcode " + lobby.code, url: link });
+    if (navigator.share) await navigator.share({ title: GAME_NAMES[lobby.game] || "Spieleabend", text: "Spiel mit! Raumcode " + lobby.code, url: link });
     else { await navigator.clipboard.writeText(link); toast("Link kopiert", true); }
   } catch (e) { /* abgebrochen */ }
 });
 $("lobby-start").addEventListener("click", () => {
   if (!lobby || !lobby.isHost || lobby.seats.length < 2) return;
   const seats = lobby.seats.map((s) => Object.assign({}, s));
-  startHostGame("online", seats, lobby.target, lobby.net, lobby.code);
+  if (lobby.game && lobby.game !== "sechs") BoardUI.startHost("online", lobby.game, seats, lobby.net, lobby.code);
+  else startHostGame("online", seats, lobby.target, lobby.net, lobby.code);
 });
 $("lobby-leave").addEventListener("click", () => {
   if (lobby && lobby.net) {
     if (lobby.isHost) lobby.seats.forEach((s) => s.kind === "remote" && lobby.net.send(s.peerId, { t: "closed" }));
     const net = lobby.net; setTimeout(() => net.close(), 300);
   }
+  const back = lobby && lobby.isHost ? lobby.game : null;
   lobby = null; session = null;
-  show("setup-online");
+  if (typeof BoardUI !== "undefined") BoardUI.reset();
+  openOnline(back);
 });
 
 // ===================================================================
@@ -1023,10 +1060,12 @@ function joinRoom(raw) {
 
 function clientMessage(msg) {
   if (!session || session.mode !== "client") return;
+  if (msg.t === "bstate") { $("online-join").disabled = false; $("online-join").textContent = "Beitreten"; BoardUI.clientState(msg); return; }
   if (msg.t === "lobby" || msg.t === "state") { $("online-join").disabled = false; $("online-join").textContent = "Beitreten"; }
   if (msg.t === "lobby") {
     lobby.players = Array.isArray(msg.players) ? msg.players.slice(0, 10) : [];
     lobby.target = Number(msg.target) || 66;
+    lobby.game = GAME_NAMES[msg.game] ? msg.game : "sechs";
     if ($("screen-lobby").classList.contains("hidden")) show("lobby");
     renderLobby();
   } else if (msg.t === "state") {
@@ -1058,7 +1097,7 @@ function clientMessage(msg) {
     const text = String(msg.text || "Fehler");
     try { session.net.close(); } catch (e) {}
     session = null; lobby = null;
-    if (!$("screen-game").classList.contains("hidden")) {
+    if (!$("screen-game").classList.contains("hidden") || !$("screen-board").classList.contains("hidden")) {
       modal("Verbindung", `<p class="modal-body-text">${esc(text)}</p>`, [{ label: "Zum Menü", primary: true, run: leaveGame }]);
       return;
     }
@@ -1095,8 +1134,10 @@ function sanitizeView(v) {
 function renderStats() {
   const s = store.get("sn6.stats", null);
   if (!s || !s.games) {
+    const board = BoardUI.statsHTML();
+    if (board) { $("stats-body").innerHTML = board; return; }
     $("stats-body").innerHTML = '<p class="hint">Noch keine Partie beendet. Spiel eine Runde gegen den Computer, dann steht hier, wie oft du gewinnst.</p>' +
-      '<button type="button" class="big-btn primary" data-go="setup-bots">Partie starten</button>';
+      '<button type="button" class="big-btn primary" data-go="home">Zur Spielauswahl</button>';
     return;
   }
   const rate = (g, w) => (g ? Math.round((w / g) * 100) + " %" : "–");
@@ -1107,7 +1148,7 @@ function renderStats() {
     <div class="stat"><b>${rate(s.games, s.wins)}</b><span>gewonnen</span></div>
     <div class="stat"><b>${s.best}</b><span>wenigste Hornochsen in einer Partie</span></div>
     <div class="stat"><b>${Math.round(s.total / s.games)}</b><span>Hornochsen im Schnitt</span></div>
-    ${by}</div>`;
+    ${by}</div>` + BoardUI.statsHTML();
 }
 
 function renderLog() {

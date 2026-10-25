@@ -1,6 +1,6 @@
 {
-  "name": "6 nimmt",
-  "short_name": "6 nimmt",
+  "name": "Spieleabend",
+  "short_name": "Spieleabend",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

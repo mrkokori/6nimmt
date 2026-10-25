@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' wss://broker.emqx.io:8084 wss://broker.hivemq.com:8884; object-src 'none'; base-uri 'self'; form-action 'self';">
-<title>6 nimmt</title>
+<title>Spieleabend</title>
 <link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1d2740">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="6 nimmt">
+<meta name="apple-mobile-web-app-title" content="Spieleabend">
 </head>
 <body>
 <svg class="sprite" aria-hidden="true">
@@ -20,13 +20,52 @@
   </symbol>
 </svg>
 
-<!-- Startseite -->
+<!-- Startseite: Spielauswahl -->
 <section id="screen-home" class="screen">
-  <div class="home-hero">
+  <header class="picker-head">
+    <h1 class="picker-title">Spieleabend</h1>
+    <p class="tagline">Fünf Klassiker – gegen den Computer, am selben Handy oder online.</p>
+  </header>
+  <div class="game-tiles">
+    <button type="button" class="game-tile" data-game="sechs">
+      <span class="tile-art art-sechs" aria-hidden="true"><i class="tc b1">12</i><i class="tc b3">30</i><i class="tc b5">55</i><i class="ts">6</i></span>
+      <span class="tile-name">6 nimmt</span><span class="tile-sub">Karten · 2–10</span>
+    </button>
+    <button type="button" class="game-tile" data-game="madn">
+      <span class="tile-art art-madn" aria-hidden="true"><i class="pawn p0"></i><i class="pawn p1"></i><i class="pawn p2"></i><i class="pawn p3"></i><i class="die">⚅</i></span>
+      <span class="tile-name">Mensch ärgere dich nicht</span><span class="tile-sub">Würfeln · 2–4</span>
+    </button>
+    <button type="button" class="game-tile" data-game="muehle">
+      <span class="tile-art art-muehle" aria-hidden="true"><svg viewBox="0 0 60 60"><rect x="4" y="4" width="52" height="52"/><rect x="14" y="14" width="32" height="32"/><rect x="24" y="24" width="12" height="12"/><path d="M30 4V24M30 36V56M4 30H24M36 30H56"/><circle class="w" cx="4" cy="4" r="5"/><circle class="w" cx="30" cy="4" r="5"/><circle class="w" cx="56" cy="4" r="5"/><circle class="b" cx="14" cy="46" r="5"/><circle class="b" cx="46" cy="30" r="5"/></svg></span>
+      <span class="tile-name">Mühle</span><span class="tile-sub">Strategie · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="dame">
+      <span class="tile-art art-dame" aria-hidden="true"><i class="chk w"></i><i class="chk b"></i><i class="chk w k">♛</i></span>
+      <span class="tile-name">Dame</span><span class="tile-sub">Strategie · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="c4">
+      <span class="tile-art art-c4" aria-hidden="true"><i class="disc y"></i><i class="disc r"></i><i class="disc y"></i><i class="disc y"></i><i class="disc r"></i><i class="disc r"></i></span>
+      <span class="tile-name">Vier gewinnt</span><span class="tile-sub">Taktik · 2</span>
+    </button>
+  </div>
+  <button type="button" class="big-btn" id="home-join">Einem Raum beitreten</button>
+  <nav class="home-links">
+    <button type="button" class="link-btn" data-go="stats">Statistik</button>
+    <button type="button" class="link-btn" data-go="settings">Einstellungen</button>
+  </nav>
+  <div id="update-banner" class="banner hidden" role="status">
+    <span>Neue Version verfügbar.</span>
+    <button type="button" id="update-reload-btn" class="small-btn">Neu laden</button>
+  </div>
+</section>
+
+<!-- 6 nimmt: Menü -->
+<section id="screen-sechs" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>6 nimmt</h2></header>
+  <div class="home-hero sechs-hero">
     <div class="hero-row" aria-hidden="true">
       <span class="hero-card b1">12</span><span class="hero-card b3">30</span><span class="hero-card b1">41</span><span class="hero-card b5">55</span><span class="hero-card b2">65</span><span class="hero-slot">6</span>
     </div>
-    <h1>6 nimmt</h1>
     <p class="tagline">Wer die sechste Karte legt, kassiert die Reihe. Wenigste Hornochsen gewinnt.</p>
   </div>
   <div class="home-actions">
@@ -37,22 +76,16 @@
   </div>
   <nav class="home-links">
     <button type="button" class="link-btn" data-go="rules">Regeln</button>
-    <button type="button" class="link-btn" data-go="stats">Statistik</button>
-    <button type="button" class="link-btn" data-go="settings">Einstellungen</button>
   </nav>
-  <div id="update-banner" class="banner hidden" role="status">
-    <span>Neue Version verfügbar.</span>
-    <button type="button" id="update-reload-btn" class="small-btn">Neu laden</button>
-  </div>
 </section>
 
 <!-- Gegen Computer -->
 <section id="screen-setup-bots" class="screen hidden">
-  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Gegen Computer</h2></header>
+  <header class="bar"><button type="button" class="back-btn" data-go="sechs" aria-label="Zurück">‹</button><h2>Gegen Computer</h2></header>
   <div class="form">
     <label class="field">Dein Name<input type="text" id="bots-name" maxlength="20" autocomplete="nickname"></label>
     <div class="field">Gegner
-      <div class="stepper"><button type="button" class="step-btn" data-step="bots-count" data-delta="-1" aria-label="Weniger">−</button><output id="bots-count">4</output><button type="button" class="step-btn" data-step="bots-count" data-delta="1" aria-label="Mehr">+</button></div>
+      <div class="stepper"><button type="button" class="step-btn" data-step="bots-count" data-delta="-1" aria-label="Weniger">−</button><output id="bots-count" data-min="1" data-max="9">4</output><button type="button" class="step-btn" data-step="bots-count" data-delta="1" aria-label="Mehr">+</button></div>
     </div>
     <div class="field">Stärke
       <div class="segmented" id="bots-level">
@@ -74,7 +107,7 @@
 
 <!-- Am selben Handy -->
 <section id="screen-setup-hotseat" class="screen hidden">
-  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Mehrere an einem Handy</h2></header>
+  <header class="bar"><button type="button" class="back-btn" data-go="sechs" aria-label="Zurück">‹</button><h2>Mehrere an einem Handy</h2></header>
   <div class="form">
     <p class="hint">Jeder wählt seine Karte verdeckt, dann wird das Handy weitergegeben. Computergegner kannst du dazunehmen.</p>
     <ol class="seat-list" id="hotseat-list"></ol>
@@ -95,7 +128,7 @@
 
 <!-- Online -->
 <section id="screen-setup-online" class="screen hidden">
-  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Online mit Freunden</h2></header>
+  <header class="bar"><button type="button" class="back-btn" id="online-back" aria-label="Zurück">‹</button><h2 id="online-title">Online mit Freunden</h2></header>
   <div class="form">
     <label class="field">Dein Name<input type="text" id="online-name" maxlength="20" autocomplete="nickname"></label>
     <button type="button" class="big-btn primary" id="online-host">Raum erstellen</button>
@@ -111,6 +144,7 @@
 <section id="screen-lobby" class="screen hidden">
   <header class="bar"><button type="button" class="back-btn" id="lobby-leave" aria-label="Raum verlassen">‹</button><h2>Raum <span id="lobby-code"></span></h2></header>
   <div class="form">
+    <p class="lobby-game" id="lobby-game"></p>
     <div id="lobby-share" class="share hidden">
       <div id="lobby-qr" class="qr"></div>
       <p class="hint">Code weitergeben oder QR-Code scannen lassen. Bleib dabei in dieser App, bis alle drin sind.</p>
@@ -147,9 +181,72 @@
   </div>
 </section>
 
+<!-- Brettspiel: Einrichtung -->
+<section id="screen-bsetup" class="screen hidden">
+  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2 id="bsetup-title"></h2></header>
+  <div class="form">
+    <button type="button" class="big-btn hidden" id="bsetup-resume">Partie fortsetzen</button>
+    <div class="field">Spielen
+      <div class="segmented" id="bsetup-mode">
+        <button type="button" data-value="bots" class="on">Computer</button>
+        <button type="button" data-value="hotseat">Am Handy</button>
+        <button type="button" data-value="online">Online</button>
+      </div>
+    </div>
+    <div id="bsetup-bots">
+      <label class="field">Dein Name<input type="text" id="bsetup-name" maxlength="20" autocomplete="nickname"></label>
+      <div class="field" id="bsetup-count-field">Computergegner
+        <div class="stepper"><button type="button" class="step-btn" data-step="bsetup-count" data-delta="-1" aria-label="Weniger">−</button><output id="bsetup-count" data-min="1" data-max="3">3</output><button type="button" class="step-btn" data-step="bsetup-count" data-delta="1" aria-label="Mehr">+</button></div>
+      </div>
+      <div class="field">Stärke
+        <div class="segmented" id="bsetup-level">
+          <button type="button" data-value="easy">Leicht</button>
+          <button type="button" data-value="normal" class="on">Normal</button>
+          <button type="button" data-value="hard">Schwer</button>
+        </div>
+      </div>
+      <div class="field" id="bsetup-first-field">Wer fängt an?
+        <div class="segmented" id="bsetup-first">
+          <button type="button" data-value="me" class="on">Ich</button>
+          <button type="button" data-value="cpu">Computer</button>
+          <button type="button" data-value="random">Zufall</button>
+        </div>
+      </div>
+    </div>
+    <div id="bsetup-hotseat" class="hidden">
+      <p class="hint">Ihr spielt abwechselnd auf diesem Handy.</p>
+      <ol class="seat-list" id="bsetup-seats"></ol>
+      <div class="row-btns" id="bsetup-seat-btns">
+        <button type="button" class="small-btn" id="bsetup-add-human">+ Mensch</button>
+        <button type="button" class="small-btn" id="bsetup-add-bot">+ Computer</button>
+      </div>
+    </div>
+    <p class="hint hidden" id="bsetup-online-hint">Du erstellst einen Raum und gibst den Code weiter. Deine Mitspieler tippen auf der Startseite auf „Einem Raum beitreten“.</p>
+    <button type="button" class="big-btn primary" id="bsetup-start">Los geht's</button>
+    <nav class="home-links"><button type="button" class="link-btn" id="bsetup-rules">Regeln</button></nav>
+  </div>
+</section>
+
+<!-- Brettspiel: Spieltisch -->
+<section id="screen-board" class="screen hidden">
+  <header class="game-bar">
+    <button type="button" class="back-btn" id="board-menu-btn" aria-label="Menü">≡</button>
+    <span id="board-info"></span>
+    <span id="board-conn" class="conn"></span>
+  </header>
+  <ul class="players bplayers" id="bplayers"></ul>
+  <div class="bstage" id="bstage">
+    <div class="bboard" id="bboard"></div>
+  </div>
+  <p class="status bstatus" id="bstatus" aria-live="polite"></p>
+  <div class="bactions" id="bactions">
+    <button type="button" class="dice-btn hidden" id="dice-btn" aria-label="Würfeln"><span class="die-face" id="die-face"></span><span class="dice-label" id="dice-label">Würfeln</span></button>
+  </div>
+</section>
+
 <!-- Regeln -->
 <section id="screen-rules" class="screen hidden">
-  <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2>Regeln</h2></header>
+  <header class="bar"><button type="button" class="back-btn" data-go="sechs" aria-label="Zurück">‹</button><h2>Regeln</h2></header>
   <div class="prose">
     <p>Im Spiel sind die Karten 1 bis 104. Jede Karte trägt Hornochsen, das sind Strafpunkte:</p>
     <ul class="bull-legend">
@@ -219,6 +316,8 @@
 <script src="lib/qrcode.js"></script>
 <script src="lib/mqtt.min.js"></script>
 <script src="net.js"></script>
+<script src="boards.js"></script>
 <script src="app.js"></script>
+<script src="boardui.js"></script>
 </body>
 </html>

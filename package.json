@@ -1,9 +1,9 @@
 {
   "name": "6-nimmt",
   "private": true,
-  "description": "6 nimmt als Browserspiel – gegen Computer, am selben Handy oder online",
+  "description": "Spieleabend – 6 nimmt und Brettspiele als Web-App, gegen Computer, am selben Handy oder online",
   "scripts": {
-    "test": "node tests/engine.test.js",
+    "test": "node tests/engine.test.js && node tests/boards.test.js",
     "test:browser": "playwright test"
   },
   "devDependencies": {

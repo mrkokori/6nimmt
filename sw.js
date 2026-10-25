@@ -1,4 +1,4 @@
-// Offline cache for the 6-nimmt-App.
+// Offline-Cache für die Spieleabend-App (6 nimmt und Brettspiele).
 // Strategie: zuerst das Netz (damit Updates sofort ankommen), bei fehlendem
 // oder zu langsamem Netz die Version aus dem Cache. Nach dem ersten Öffnen
 // funktioniert die App damit auch ohne Empfang unterwegs.
@@ -12,6 +12,8 @@ const ASSETS = [
   "style.css",
   "app.js",
   "engine.js",
+  "boards.js",
+  "boardui.js",
   "net.js",
   "lib/mqtt.min.js",
   "lib/qrcode.js",

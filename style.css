@@ -295,3 +295,157 @@ input[type="text"] {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* =====================================================================
+   Spielauswahl
+   ===================================================================== */
+.picker-head { padding: 5vh 0 18px; }
+.picker-title { font-size: 54px; margin: 0 0 8px; }
+.game-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.game-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  padding: 12px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--table-2);
+}
+.game-tile:first-child { grid-column: 1 / -1; }
+.game-tile:active { transform: translateY(1px); }
+.tile-name { font-weight: 700; font-size: 16px; line-height: 1.2; }
+.tile-sub { font-size: 13px; color: var(--muted); }
+.tile-art { height: 62px; width: 100%; display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+.tile-art i { font-style: normal; }
+.art-sechs .tc, .art-sechs .ts { width: 34px; height: 46px; border-radius: 5px; display: grid; place-items: center; font: 700 16px var(--num); }
+.art-sechs .tc { background: var(--card); color: var(--card-ink); }
+.art-sechs .tc.b3 { background: var(--b3); } .art-sechs .tc.b5 { background: var(--b5); }
+.art-sechs .ts { border: 2px dashed var(--barn); color: var(--barn); }
+.art-madn .pawn { width: 20px; height: 20px; border-radius: 50%; }
+.art-madn .p0 { background: var(--m0); } .art-madn .p1 { background: var(--m1); } .art-madn .p2 { background: var(--m2); } .art-madn .p3 { background: var(--m3); }
+.art-madn .die { font-size: 40px; line-height: 1; color: var(--card); margin-left: 6px; }
+.art-muehle svg { height: 58px; width: 58px; }
+.art-muehle rect, .art-muehle path { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.art-muehle .w { fill: var(--card); } .art-muehle .b { fill: #2b3142; stroke: var(--muted); stroke-width: 1; }
+.art-dame .chk { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; color: var(--card-ink); }
+.art-dame .w { background: var(--card); } .art-dame .b { background: var(--checker-dark); }
+.art-c4 { display: grid; grid-template-columns: repeat(3, 22px); gap: 4px; height: auto; padding: 4px; background: var(--c4-frame); border-radius: 8px; width: max-content; }
+.art-c4 .disc { width: 22px; height: 22px; border-radius: 50%; }
+.art-c4 .y { background: var(--hay); } .art-c4 .r { background: var(--barn); }
+.sechs-hero { padding-top: 2vh; }
+.stats-sub { margin: 20px 0 10px; font-size: 17px; }
+.lobby-game { margin: -8px 0 0; color: var(--hay); font-weight: 700; }
+
+/* =====================================================================
+   Brettspiele
+   ===================================================================== */
+:root {
+  --m0: #e9b949; --m1: #4fae6e; --m2: #d4513a; --m3: #4a86d8;
+  --c4-frame: #3a5bb5;
+  --wood: #d8b57e; --wood-ink: #5b3d1e;
+  --sq-light: #ecdcb8; --sq-dark: #9a6d43;
+  --checker-dark: #3b2b25;
+}
+.seat-color { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; flex: none; }
+.seat-color.c0 { background: var(--hay); } .seat-color.c1 { background: var(--barn); }
+.seat-color.s0 { background: var(--card); } .seat-color.s1 { background: #2b3142; box-shadow: 0 0 0 1.5px var(--muted); }
+.seat-color.m0 { background: var(--m0); } .seat-color.m1 { background: var(--m1); } .seat-color.m2 { background: var(--m2); } .seat-color.m3 { background: var(--m3); }
+#screen-board.g-dame .seat-color.s1, .g-dame ~ * .seat-color.s1 { background: var(--checker-dark); }
+.seat-list .seat-color { width: 14px; height: 14px; }
+
+#screen-board { gap: 10px; }
+.bplayers .player { min-width: 0; }
+.bplayers .pname { display: flex; align-items: center; }
+.bplayers .pstate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bstage { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.bboard {
+  position: relative; width: 100%; aspect-ratio: 1;
+  max-width: min(100%, calc(100dvh - 270px));
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.bboard.g-c4 { aspect-ratio: 7 / 6; max-width: min(100%, calc((100dvh - 270px) * 7 / 6)); }
+.bboard > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pieces, .hits { position: absolute; inset: 0; }
+.pieces { z-index: 1; }
+.bboard .frame { z-index: 2; pointer-events: none; }
+.bboard .frame path { fill: var(--c4-frame); }
+.hits { z-index: 3; }
+.bstatus { min-height: 46px; display: flex; align-items: center; justify-content: center; text-align: center; margin: 0; }
+.bactions { display: flex; justify-content: center; min-height: 0; }
+
+.piece { position: absolute; border-radius: 50%; will-change: transform; }
+
+/* Vier gewinnt */
+.g-c4 { background: #1a2a55; border-radius: 12px; overflow: hidden; }
+.disc.c0 { background: radial-gradient(circle at 35% 30%, #fbe39a, var(--hay) 55%, #b98a1f); }
+.disc.c1 { background: radial-gradient(circle at 35% 30%, #f29a86, var(--barn) 55%, #8f2a1a); }
+.disc.win { animation: winpulse 0.9s ease-in-out infinite; }
+@keyframes winpulse { 50% { filter: brightness(1.35); box-shadow: 0 0 0 4px rgba(255, 255, 255, .75); } }
+.hit.col { border-radius: 0; }
+.hit.col:hover, .hit.col:focus-visible { background: rgba(255, 255, 255, .08); }
+
+/* Mühle */
+.g-muehle > svg .lines path { fill: none; stroke: var(--wood-ink); stroke-width: 0.07; stroke-linejoin: round; }
+.g-muehle > svg .dots circle { fill: var(--wood-ink); }
+.g-muehle { background: var(--wood); border-radius: 14px; }
+.stone { box-shadow: 0 2px 0 rgba(0, 0, 0, .35), inset 0 -3px 0 rgba(0, 0, 0, .15); }
+.stone.s0 { background: radial-gradient(circle at 35% 30%, #fff, var(--card) 60%, #cfc6b0); }
+.stone.s1 { background: radial-gradient(circle at 35% 30%, #5a6278, #2b3142 60%, #151925); }
+.stone.mill, .checker.mill { box-shadow: 0 0 0 4px var(--hay), 0 2px 0 rgba(0, 0, 0, .35); }
+
+/* Dame */
+.g-dame { border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 4px var(--wood-ink); }
+.g-dame > svg .light { fill: var(--sq-light); }
+.g-dame > svg .dark rect { fill: var(--sq-dark); }
+.checker { display: grid; place-items: center; box-shadow: 0 3px 0 rgba(0, 0, 0, .4), inset 0 0 0 3px rgba(0, 0, 0, .08); container-type: inline-size; }
+.checker.s0 { background: radial-gradient(circle at 35% 30%, #fff, var(--card) 60%, #d5ccb4); color: #8a6a2a; }
+.checker.s1 { background: radial-gradient(circle at 35% 30%, #6b4f45, var(--checker-dark) 60%, #1e1512); color: var(--hay); }
+.checker.king::after { content: "♛"; font-size: 58cqw; line-height: 1; }
+
+/* Mensch ärgere dich nicht */
+.g-madn > svg .plate { fill: #f1e6c8; }
+.g-madn > svg .f { fill: #fffaf0; stroke: #8b7a55; stroke-width: 0.05; }
+.g-madn > svg .f.m0 { fill: #f7dc8e; } .g-madn > svg .f.m1 { fill: #a9dcb8; } .g-madn > svg .f.m2 { fill: #f0a594; } .g-madn > svg .f.m3 { fill: #a9c6f0; }
+.g-madn > svg .f.start { stroke-width: 0.11; }
+.g-madn > svg .f.start.m0 { fill: var(--m0); } .g-madn > svg .f.start.m1 { fill: var(--m1); } .g-madn > svg .f.start.m2 { fill: var(--m2); } .g-madn > svg .f.start.m3 { fill: var(--m3); }
+.g-madn > svg .f.unused { opacity: .35; }
+.g-madn > svg .hub { fill: #8b7a55; }
+.pawn { box-shadow: 0 3px 0 rgba(0, 0, 0, .45), inset 0 -4px 0 rgba(0, 0, 0, .18); border: 2px solid rgba(0, 0, 0, .35); }
+.pawn.m0 { background: radial-gradient(circle at 35% 30%, #fff1c2, var(--m0) 55%, #a87a12); }
+.pawn.m1 { background: radial-gradient(circle at 35% 30%, #c8f0d4, var(--m1) 55%, #276b3d); }
+.pawn.m2 { background: radial-gradient(circle at 35% 30%, #fbc2b5, var(--m2) 55%, #8a2716); }
+.pawn.m3 { background: radial-gradient(circle at 35% 30%, #cfe0fb, var(--m3) 55%, #1f4d93); }
+.dest { position: absolute; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(29, 39, 64, .55); pointer-events: none; animation: destpulse 1.2s ease-in-out infinite; }
+@keyframes destpulse { 50% { box-shadow: inset 0 0 0 5px rgba(29, 39, 64, .25); } }
+
+/* Auswahl und tippbare Felder */
+.hit { position: absolute; border: 0; padding: 0; background: transparent; border-radius: 50%; cursor: pointer; }
+.hit:focus-visible { outline: 3px solid var(--hay); outline-offset: -2px; }
+.hit.target::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: rgba(233, 185, 73, .85); box-shadow: 0 0 0 3px rgba(29, 39, 64, .35); animation: targetpulse 1.1s ease-in-out infinite; }
+.g-dame .hit { border-radius: 0; }
+.g-dame .hit.target::after { inset: 34%; }
+@keyframes targetpulse { 50% { transform: scale(1.25); } }
+.hit.remove { box-shadow: inset 0 0 0 3px var(--barn); animation: removepulse 0.9s ease-in-out infinite; }
+@keyframes removepulse { 50% { box-shadow: inset 0 0 0 6px var(--barn); } }
+.piece.can { box-shadow: 0 0 0 3px rgba(233, 185, 73, .9), 0 3px 0 rgba(0, 0, 0, .4); animation: canbob 1.1s ease-in-out infinite; }
+@keyframes canbob { 50% { box-shadow: 0 0 0 5px rgba(233, 185, 73, .55), 0 3px 0 rgba(0, 0, 0, .4); } }
+.piece.sel { box-shadow: 0 0 0 4px var(--hay), 0 8px 14px rgba(0, 0, 0, .45); z-index: 2; }
+
+/* Würfel */
+.dice-btn {
+  display: flex; align-items: center; gap: 14px; border: 0; background: var(--table-2);
+  padding: 10px 22px 10px 12px; border-radius: 16px; font-weight: 700; font-size: 18px; min-height: 76px;
+}
+.dice-btn:disabled { background: transparent; cursor: default; }
+.dice-btn.ready { background: var(--hay); color: var(--hay-ink); animation: diceready 1.4s ease-in-out infinite; }
+@keyframes diceready { 50% { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, .35); } }
+.die-face {
+  width: 56px; height: 56px; border-radius: 12px; background: var(--card);
+  display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px; gap: 2px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .35);
+}
+.die-face i { border-radius: 50%; }
+.die-face i.pip { background: var(--card-ink); }
+.dice-btn.rolling .die-face { animation: dieroll 0.12s linear infinite; }
+@keyframes dieroll { 25% { transform: rotate(14deg) translateY(-3px); } 75% { transform: rotate(-14deg) translateY(-3px); } }
+
+@media (max-height: 700px) {
+  .bstatus { min-height: 36px; font-size: 15px; }
+  .dice-btn { min-height: 64px; }
+  .die-face { width: 46px; height: 46px; padding: 6px; }
+}
