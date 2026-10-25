@@ -55,8 +55,23 @@ const BoardUI = (function () {
   const canAct = () => {
     if (!bs || animating || pending > 0 || bs.waiting) return false;
     const cur = G().current(bs.state);
+    if (isPrivateHotseat() && bs.viewer !== cur) return false;
     return cur >= 0 && localHuman(cur);
   };
+  // Spiele mit verdeckten Infos (Schiffe versenken): wer schaut gerade?
+  const isPrivate = () => bs && G().private;
+  const isPrivateHotseat = () => isPrivate() && bs.mode === "hotseat" && bs.seats.filter((x) => x.kind === "human").length > 1;
+  function viewSeat() {
+    if (!bs) return 0;
+    if (isClient()) return bs.mySeat;
+    if (isPrivateHotseat()) return bs.viewer === undefined ? -1 : bs.viewer;
+    const me = meSeat();
+    return me >= 0 ? me : 0;
+  }
+  function shown(st) {
+    if (!bs || !G().view || isClient()) return st;
+    return G().view(st, viewSeat());
+  }
   const whoName = (seat, verbDu, verbEr) => (seat === meSeat() ? "Du " + verbDu : esc(bs.seats[seat].name) + " " + verbEr);
   const flipped = () => bs && bs.gid === "dame" && meSeat() === 1;
 
@@ -195,7 +210,7 @@ const BoardUI = (function () {
   function begin(o) {
     clearTimeout(botTimer);
     bs = { gid: o.gid, mode: o.mode, seats: o.seats, state: o.state, net: o.net || null, code: o.code || "", mySeat: o.mySeat, recorded: false };
-    disp = clone(bs.state);
+    disp = clone(shown(bs.state));
     sel = null; built = null; animating = false; pending = 0; caption = ""; chain = Promise.resolve();
     closeModal();
     show("board");
@@ -219,7 +234,7 @@ const BoardUI = (function () {
     const meta = seatMetaB();
     bs.seats.forEach((s, i) => {
       if (s.kind === "remote" && s.connected !== false && s.peerId) {
-        bs.net.send(s.peerId, { t: "bstate", game: bs.gid, state: bs.state, events, seats: meta, seat: i, code: bs.code });
+        bs.net.send(s.peerId, { t: "bstate", game: bs.gid, state: G().view ? G().view(bs.state, i) : bs.state, events, seats: meta, seat: i, code: bs.code });
       }
     });
   }
@@ -250,7 +265,7 @@ const BoardUI = (function () {
     broadcast(events);
     save();
     pending++;
-    const final = clone(bs.state);
+    const final = clone(shown(bs.state));
     queue(events, final, () => { pending--; loop(); });
   }
 
@@ -262,6 +277,7 @@ const BoardUI = (function () {
     if (res) { finish(res); return; }
     const cur = G().current(st);
     const seat = bs.seats[cur];
+    if (seat && seat.kind === "human" && isPrivateHotseat() && bs.viewer !== cur) { coverFor(cur); return; }
     if (seat && seat.kind === "bot") {
       clearTimeout(botTimer);
       const gid = bs.gid, stRef = st;
@@ -276,6 +292,25 @@ const BoardUI = (function () {
     render();
   }
 
+  // Am selben Handy: Weitergeben, ohne die andere Flotte zu zeigen
+  function coverFor(seat) {
+    bs.viewer = -1;
+    disp = clone(shown(bs.state));
+    render();
+    $("cover-title").textContent = bs.seats[seat].name;
+    $("cover-btn").textContent = "Ich bin bereit";
+    $("cover").classList.remove("hidden");
+    $("cover-btn").onclick = () => {
+      $("cover").classList.add("hidden");
+      $("cover-btn").textContent = "Meine Karten zeigen";
+      if (!bs) return;
+      bs.viewer = seat;
+      disp = clone(shown(bs.state));
+      render();
+    };
+    $("cover-btn").focus();
+  }
+
   function finish(res) {
     if (bs.finishShown) return;
     bs.finishShown = true;
@@ -285,6 +320,7 @@ const BoardUI = (function () {
       if (me >= 0 && bs.mode !== "hotseat") addBoardStat(bs.gid, res.winners.includes(me), res.draw);
       save();
     }
+    if (isPrivate() && !isClient()) { bs.viewer = viewSeat() < 0 ? 0 : viewSeat(); disp = clone(bs.state); }
     render();
     let title;
     if (res.draw) title = "Unentschieden";
@@ -351,7 +387,7 @@ const BoardUI = (function () {
     if (gid) { setupGame = gid; show("bsetup"); } else show("home");
   }
 
-  function reset() { clearTimeout(botTimer); bs = null; disp = null; animating = false; pending = 0; chain = Promise.resolve(); }
+  function reset() { clearTimeout(botTimer); $("cover").classList.add("hidden"); bs = null; disp = null; animating = false; pending = 0; chain = Promise.resolve(); }
 
   // ===================================================================
   // Online
@@ -512,7 +548,7 @@ const BoardUI = (function () {
     const bkey = bs.gid + (bs.gid === "madn" ? bs.state.players : "") + (flipped() ? "f" : "") + (bs.state.variant || "") + (SPEC[bs.gid] && SPEC[bs.gid].buildKey ? SPEC[bs.gid].buildKey(bs.state) : "");
     if (built !== bkey) { build(); built = bkey; }
     renderPlayers();
-    if (SPEC[bs.gid] && SPEC[bs.gid].custom) SPEC[bs.gid].renderCustom(disp || bs.state, canAct());
+    if (SPEC[bs.gid] && SPEC[bs.gid].custom) SPEC[bs.gid].renderCustom(disp || shown(bs.state), canAct());
     else { renderPieces(disp || bs.state); renderHits(); }
     renderStatus();
     renderDice();
@@ -985,7 +1021,7 @@ const BoardUI = (function () {
     get bs() { return bs; }, get disp() { return disp; }, set disp(v) { disp = v; },
     get sel() { return sel; }, set sel(v) { sel = v; },
     act, render, renderPlayers, ensurePiece, pieceEl, placeEl, unit, travel, fadeOut, pop, wait, setCaption, whoName, meSeat, canAct,
-    geom: geomOf, board: boardEl, positionAll, setDie, localHuman
+    geom: geomOf, board: boardEl, positionAll, setDie, localHuman, viewSeat
   };
   return { openSetup, startHost, hostMessage, hostLeave, clientState, netStatus, onShow, reset, statsHTML, current: () => bs, rules: RULES, register, kit, spec: (gid) => SPEC[gid], games: () => Object.keys(GAMES) };
 })();

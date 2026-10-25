@@ -3,7 +3,7 @@
 // oder zu langsamem Netz die Version aus dem Cache. Nach dem ersten Öffnen
 // funktioniert die App damit auch ohne Empfang unterwegs.
 // Bei jeder Veröffentlichung hier UND in app.js (APP_VERSION) erhöhen.
-const VERSION = "2026.10.25.10";
+const VERSION = "2026.10.25.11";
 const CACHE_NAME = "sechs-nimmt-" + VERSION;
 const NETWORK_TIMEOUT_MS = 3000;
 const ASSETS = [
@@ -15,9 +15,11 @@ const ASSETS = [
   "boards.js",
   "boards2.js",
   "boards3.js",
+  "boards4.js",
   "boardui.js",
   "boardui2.js",
   "boardui3.js",
+  "boardui4.js",
   "net.js",
   "lib/mqtt.min.js",
   "lib/qrcode.js",

@@ -1,6 +1,6 @@
 # Spieleabend
 
-Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, **Dame**, **Vier gewinnt**, **Reversi**, **Tic-Tac-Toe**, **Gomoku** und **Kniffel** – gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
+Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, **Dame**, **Vier gewinnt**, **Reversi**, **Tic-Tac-Toe**, **Gomoku**, **Kniffel** und **Schiffe versenken** – gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
 
 **Spiel öffnen:** https://mrkokori.github.io/6nimmt/
 
@@ -15,6 +15,7 @@ Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, *
 - **Tic-Tac-Toe** (2): klassisch 3×3 oder „Ultimate“ – neun kleine Felder in einem großen, dein Zug bestimmt, wo der Gegner spielen muss.
 - **Gomoku** (2): Fünf in einer Reihe auf dem 15×15-Brett; einmal tippen zeigt den Stein zur Probe, nochmal tippen setzt ihn.
 - **Kniffel** (1–6): Würfel purzeln, antippen zum Halten, Punkteblock für alle mit möglichen Punkten zum Antippen, Bonus oben und Kniffel-Bonus.
+- **Schiffe versenken** (2): Flotte zufällig aufstellen (neu verteilen, bis sie passt), dann schießen – Wasser platscht, Treffer explodieren, wer trifft, darf nochmal. Jeder sieht nur seine eigene Flotte: online bekommt jedes Handy nur seine Sicht, am selben Handy kommt zwischen den Zügen ein Weitergabe-Bildschirm. Auch der Computer sieht nur, was er beschossen hat.
 
 Jedes Spiel gibt es gegen den Computer in drei Stärken (leicht, normal, schwer), am selben Handy und online. Laufende Partien gegen den Computer oder am selben Handy werden gespeichert und lassen sich fortsetzen.
 
@@ -41,6 +42,7 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `boardui.js` | Brettspiele: Bretter, Figuren, Animationen, Spielablauf |
 | `boards2.js`, `boardui2.js` | Reversi, Tic-Tac-Toe, Gomoku: Regeln/Computer und Oberfläche |
 | `boards3.js`, `boardui3.js` | Kniffel: Regeln/Computer und Oberfläche |
+| `boards4.js`, `boardui4.js` | Schiffe versenken: Regeln/Computer und Oberfläche |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
 | `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |

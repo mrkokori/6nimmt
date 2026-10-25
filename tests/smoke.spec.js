@@ -175,6 +175,12 @@ test("Online: aus der Lobby entfernter Gast bekommt Hinweis und tritt nicht wied
 async function boardStep(page) {
   if (await page.isVisible("#modal")) return;
   if (await page.isVisible("#dice-btn") && await page.isEnabled("#dice-btn")) { await page.click("#dice-btn", { force: true }).catch(() => {}); return; }
+  if (await page.isVisible("#cover")) { await page.click("#cover-btn").catch(() => {}); return; }
+  // Schiffe versenken: Flotte bestätigen, dann schießen
+  const ready = await page.$('[data-kind="ready"]');
+  if (ready) { await ready.click({ force: true }).catch(() => {}); return; }
+  const sea = await page.$$(".bs-cell.free");
+  if (sea.length) { await sea[Math.floor(Math.random() * sea.length)].click({ force: true }).catch(() => {}); return; }
   // Kniffel: würfeln, dann irgendwann eintragen
   if (await page.$(".kn")) {
     const roll = await page.$(".kn-roll.act");
@@ -211,7 +217,7 @@ async function playBoardToEnd(pages, host, ms = 240000) {
   throw new Error("Partie nicht fertig geworden");
 }
 
-for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame", "Dame"], ["madn", "Mensch ärgere dich nicht"], ["reversi", "Reversi"], ["ttt", "Tic-Tac-Toe"], ["gomoku", "Gomoku"], ["kniffel", "Kniffel"]]) {
+for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame", "Dame"], ["madn", "Mensch ärgere dich nicht"], ["reversi", "Reversi"], ["ttt", "Tic-Tac-Toe"], ["gomoku", "Gomoku"], ["kniffel", "Kniffel"], ["schiffe", "Schiffe versenken"]]) {
   test(`${label}: gegen Computer bis zum Ende`, async ({ page }) => {
     await setup(page, "Dominic");
     await page.click(`[data-game="${gid}"]`);
@@ -242,7 +248,7 @@ test("Mühle am selben Handy: abwechselnd ziehen", async ({ page }) => {
   expect(page.errors).toEqual([]);
 });
 
-for (const [gid, label, bots] of [["c4", "Vier gewinnt", 0], ["madn", "Mensch ärgere dich nicht", 1], ["kniffel", "Kniffel", 0]]) {
+for (const [gid, label, bots] of [["c4", "Vier gewinnt", 0], ["madn", "Mensch ärgere dich nicht", 1], ["kniffel", "Kniffel", 0], ["schiffe", "Schiffe versenken", 0]]) {
   test(`${label} online bis zum Ende`, async ({ browser }) => {
     test.setTimeout(500000);
     const host = await (await browser.newContext()).newPage();
@@ -297,4 +303,28 @@ test("Ultimate Tic-Tac-Toe online bis zum Ende", async ({ browser }) => {
   const title = await playBoardToEnd([host, guest], host, 280000);
   expect(title).toMatch(/gewinn|Unentschieden/);
   expect(host.errors.concat(guest.errors)).toEqual([]);
+});
+
+test("Schiffe versenken am selben Handy: Weitergabe verdeckt die Flotten", async ({ page }) => {
+  test.setTimeout(400000);
+  await setup(page, "Dominic");
+  await page.click('[data-game="schiffe"]');
+  await page.click('#bsetup-mode button[data-value="hotseat"]');
+  await page.fill("#bsetup-seats input >> nth=1", "Sonja");
+  await page.click("#bsetup-start");
+  await expect(page.locator("#cover-title")).toHaveText("Dominic");
+  await page.click("#cover-btn");
+  await page.click('[data-kind="ready"]', { force: true });
+  await expect(page.locator("#cover-title")).toHaveText("Sonja");
+  // Unter dem Weitergabe-Bildschirm ist keine Flotte zu sehen
+  expect(await page.locator(".bs-ship").count()).toBe(0);
+  await page.click("#cover-btn");
+  await page.click('[data-kind="ready"]', { force: true });
+  await expect(page.locator("#cover-title")).toHaveText("Dominic");
+  await page.click("#cover-btn");
+  // Im gegnerischen Meer sind keine (unversenkten) Schiffe sichtbar
+  expect(await page.locator(".bs-grid.enemy .bs-ship").count()).toBe(0);
+  const title = await playBoardToEnd([page], page, 380000);
+  expect(title).toMatch(/gewinn/);
+  expect(page.errors).toEqual([]);
 });

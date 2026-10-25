@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.10";
+const APP_VERSION = "2026.10.25.11";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
