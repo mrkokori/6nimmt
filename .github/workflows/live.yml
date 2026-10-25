@@ -1,0 +1,23 @@
+name: Live-Diagnose
+
+# Prüft die veröffentlichte Seite gegen die echten öffentlichen Server.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tests/live-check.js"
+      - ".github/workflows/live.yml"
+      - "net.js"
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Live-Diagnose
+        run: node tests/live-check.js
