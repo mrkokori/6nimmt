@@ -172,8 +172,22 @@ test("Online: aus der Lobby entfernter Gast bekommt Hinweis und tritt nicht wied
 });
 
 // ---------- Brettspiele ----------
+const NEW_GAMES = ["memory", "kalaha", "dots", "nim", "mastermind", "wuerfel", "halma16", "fuchs", "maumau", "schnapsen", "romme"];
 async function boardStep(page) {
   if (await page.isVisible("#modal")) return;
+  const gid = await page.evaluate(() => BoardUI.current() && BoardUI.current().gid).catch(() => null);
+  if (NEW_GAMES.includes(gid)) {
+    if (await page.isVisible("#cover")) { await page.click("#cover-btn").catch(() => {}); return; }
+    // meist über die Oberfläche klicken, manchmal einen sinnvollen Zug erzwingen (damit es vorangeht)
+    const els = await page.$$(".bboard .act:not([disabled]), .bboard .hit");
+    if (els.length && Math.random() < 0.6) { await els[Math.floor(Math.random() * els.length)].click({ force: true }).catch(() => {}); return; }
+    await page.evaluate(() => {
+      const K = BoardUI.kit, bs = BoardUI.current();
+      if (!bs || !K.canAct()) return;
+      try { K.act(window.Boards[bs.gid].ai(bs.state, "easy")); } catch (e) { console.warn(e); }
+    }).catch(() => {});
+    return;
+  }
   if (await page.isVisible("#dice-btn") && await page.isEnabled("#dice-btn")) { await page.click("#dice-btn", { force: true }).catch(() => {}); return; }
   if (await page.isVisible("#cover")) { await page.click("#cover-btn").catch(() => {}); return; }
   // Schiffe versenken: Flotte bestätigen, dann schießen
@@ -327,6 +341,80 @@ test("Schiffe versenken am selben Handy: Weitergabe verdeckt die Flotten", async
   // Im gegnerischen Meer sind keine (unversenkten) Schiffe sichtbar
   expect(await page.locator(".bs-grid.enemy .bs-ship").count()).toBe(0);
   const title = await playBoardToEnd([page], page, 380000);
+  expect(title).toMatch(/gewinn/);
+  expect(page.errors).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Neue Spiele
+// ---------------------------------------------------------------------------
+const NEW_LABELS = { memory: "Memory", kalaha: "Kalaha", dots: "Käsekästchen", nim: "Nim", mastermind: "Mastermind", wuerfel: "Würfelreihen", halma16: "Halma", fuchs: "Fuchs und Gänse", maumau: "Mau-Mau", schnapsen: "Schnapsen", romme: "Rommé" };
+for (const [gid, label] of Object.entries(NEW_LABELS)) {
+  test(`${label}: gegen Computer bis zum Ende`, async ({ page }) => {
+    test.setTimeout(600000);
+    await setup(page, "Dominic");
+    await page.click(`[data-game="${gid}"]`);
+    await expect(page.locator("#bsetup-title")).toHaveText(label);
+    await page.click('#bsetup-level button[data-value="easy"]');
+    // Mehrspieler-Spiele: auf zwei Spieler reduzieren
+    for (let i = 0; i < 5; i++) await page.click('[data-step="bsetup-count"][data-delta="-1"]').catch(() => {});
+    if (gid === "memory" || gid === "mastermind") await page.click('[data-step="bsetup-count"][data-delta="1"]').catch(() => {});
+    await page.click("#bsetup-start");
+    await expect(page.locator("#screen-board")).toBeVisible();
+    const title = await playBoardToEnd([page], page, 560000);
+    expect(title).toMatch(/gewinn|Unentschieden|verloren/);
+    await page.click("text=Nochmal");
+    await expect(page.locator("#screen-board")).toBeVisible();
+    expect(page.errors).toEqual([]);
+  });
+}
+
+for (const gid of ["maumau", "schnapsen", "romme", "memory", "mastermind", "wuerfel", "kalaha"]) {
+  const label = NEW_LABELS[gid];
+  test(`${label} online bis zum Ende`, async ({ browser }) => {
+    test.setTimeout(600000);
+    const host = await (await browser.newContext()).newPage();
+    const guest = await (await browser.newContext()).newPage();
+    await setup(host, "Dominic");
+    await setup(guest, "Sonja");
+    await host.click(`[data-game="${gid}"]`);
+    if (gid === "schnapsen") await host.click('#bsetup-variant button[data-value="1"]');
+    await host.click('#bsetup-mode button[data-value="online"]');
+    await host.click("#bsetup-start");
+    await host.click("#online-host");
+    await expect(host.locator("#screen-lobby")).toBeVisible();
+    const code = (await host.textContent("#lobby-code")).trim();
+    await guest.click("#home-join");
+    await guest.fill("#online-code", code);
+    await guest.click("#online-join");
+    await expect(guest.locator("#lobby-game")).toHaveText(label);
+    await host.click("#lobby-start");
+    await expect(guest.locator("#screen-board")).toBeVisible();
+    // Verdeckte Karten: der Gast sieht die Hand des Hosts nicht
+    if (["maumau", "schnapsen", "romme"].includes(gid)) {
+      const hidden = await guest.evaluate(() => BoardUI.current().state.hands[0].every((c) => c === -1));
+      expect(hidden).toBe(true);
+    }
+    const title = await playBoardToEnd([host, guest], host, 560000);
+    expect(title).toMatch(/gewinn|Unentschieden|verloren/);
+    await expect(guest.locator("#modal-title")).toHaveText(/gewinn|Unentschieden|verloren/);
+    expect(host.errors.concat(guest.errors)).toEqual([]);
+  });
+}
+
+test("Mau-Mau am selben Handy: Weitergabe verdeckt die Karten", async ({ page }) => {
+  test.setTimeout(300000);
+  await setup(page, "Dominic");
+  await page.click('[data-game="maumau"]');
+  await page.click('#bsetup-mode button[data-value="hotseat"]');
+  await page.fill("#bsetup-seats input >> nth=1", "Sonja");
+  await page.click("#bsetup-start");
+  await expect(page.locator("#cover")).toBeVisible();
+  // verdeckt: keine Handkarte sichtbar
+  expect(await page.$$eval(".cg-hand .pcb", (els) => els.length)).toBe(0);
+  await page.click("#cover-btn");
+  await expect(page.locator(".cg-hand .pcb")).toHaveCount(5);
+  const title = await playBoardToEnd([page], page, 280000);
   expect(title).toMatch(/gewinn/);
   expect(page.errors).toEqual([]);
 });

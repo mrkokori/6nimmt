@@ -9,7 +9,7 @@ Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, *
 - **6 nimmt** (2–10): Wer die sechste Karte an eine Reihe legt, kassiert die Hornochsen. Hinweise auf der Hand, Spielende bei 33, 66 oder 99.
 - **Mensch ärgere dich nicht** (2–4): Würfel rollt, Figuren hüpfen Feld für Feld, Rausgeworfene fliegen ins Haus zurück. Mit 6 raus, Startfeld räumen, drei Versuche – die üblichen Regeln.
 - **Mühle** (2): Setzen, ziehen, springen mit drei Steinen; geschlossene Mühlen leuchten, entfernte Steine fliegen vom Brett.
-- **Dame** (2): Deutsche Regeln mit Schlagzwang, Mehrfachsprung und weit ziehenden Damen.
+- **Dame** (2): Mehrfachsprung und weit ziehende Damen; Schlagzwang lässt sich vor der Partie ein- oder ausschalten.
 - **Vier gewinnt** (2): Steine fallen mit Aufprall in die Spalte, die Viererreihe leuchtet.
 - **Reversi** (2): Steine drehen sich nacheinander um, mit Aussetzen, wenn kein Zug geht.
 - **Tic-Tac-Toe** (2): klassisch 3×3 oder „Ultimate“ – neun kleine Felder in einem großen, dein Zug bestimmt, wo der Gegner spielen muss.
@@ -18,6 +18,20 @@ Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, *
 - **Schiffe versenken** (2): Flotte zufällig aufstellen (neu verteilen, bis sie passt), dann schießen – Wasser platscht, Treffer explodieren, wer trifft, darf nochmal. Jeder sieht nur seine eigene Flotte: online bekommt jedes Handy nur seine Sicht, am selben Handy kommt zwischen den Zügen ein Weitergabe-Bildschirm. Auch der Computer sieht nur, was er beschossen hat.
 - **Sternhalma** (2–6): Sternbrett mit 121 Löchern, Murmeln hüpfen in Sprungketten übers Brett. Mit Blockade-Regel: Ist die Zielspitze voll und eigene Murmeln sind dabei, zählt das als Sieg.
 - **Backgammon** (2): Würfel rollen aufs Brett, Steine springen von Zunge zu Zunge, Geschlagene fliegen auf die Bar. Mit Pasch, Bar, Auswürfeln und der Pflicht, möglichst beide Würfel zu nutzen. Der schwere Computer prüft für seine besten Züge alle 21 Würfe des Gegners.
+
+- **Memory** (1–4): 12 oder 18 Paare, Karten drehen sich um, gefundene Paare fliegen zum Spieler. Der Computer merkt sich je nach Stärke mehr oder weniger.
+- **Kalaha** (2): Steine werden einzeln in die Mulden gesät, gefangene Steine fliegen ins Kalaha. 3, 4 oder 6 Steine je Mulde; im Hochformat steht das Brett senkrecht.
+- **Käsekästchen** (2–4): Striche ziehen, geschlossene Kästchen färben sich, wer schließt, zieht nochmal. Feld 3×3, 5×5 oder 7×7.
+- **Nim** (2): Hölzchen in vier Reihen; einstellbar, ob das letzte Hölzchen gewinnt oder verliert. Der schwere Computer spielt perfekt.
+- **Mastermind** (1–4): Jeder knackt seinen eigenen Geheimcode aus 6 Farben, schwarze und weiße Stecker als Antwort; wer in einer Runde knackt, gewinnt.
+- **Würfelreihen** (2–5): Würfel-Ankreuzspiel mit vier Farbreihen, weißen und farbigen Würfeln, Fehlwürfen und Schließen von Reihen.
+- **Halma** (2–4): 16×16-Brett, Figuren springen in Ketten (auch schräg) von Ecke zu Ecke.
+- **Fuchs und Gänse** (2): 13 Gänse gegen einen Fuchs auf dem Kreuzbrett, klassisch oder mit Schräglinien. Wer beginnt, spielt die Gänse.
+- **Mau-Mau** (2–5): 7 = zwei ziehen (stapelbar), 8 = aussetzen, Bube wünscht eine Farbe. Karten fliegen auf den Stapel.
+- **Schnapsen** (2): 66 mit Atout, Ansagen (20/40), Atout tauschen, Zudrehen und Bummerl bis 7. Der schwere Computer rechnet das Endspiel genau durch.
+- **Rommé** (2–4): Zwei Kartenspiele mit 6 Jokern, Sätze und Reihen, erstes Auslegen ab 40 Punkten, danach anlegen.
+
+Bei den Kartenspielen sieht jeder nur seine eigenen Karten – online bekommt jedes Handy nur seine Sicht, am selben Handy kommt zwischen den Zügen ein Weitergabe-Bildschirm.
 
 Jedes Spiel gibt es gegen den Computer in drei Stärken (leicht, normal, schwer), am selben Handy und online. Laufende Partien gegen den Computer oder am selben Handy werden gespeichert und lassen sich fortsetzen.
 
@@ -47,6 +61,9 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `boards4.js`, `boardui4.js` | Schiffe versenken: Regeln/Computer und Oberfläche |
 | `boards5.js`, `boardui5.js` | Sternhalma: Regeln/Computer und Oberfläche |
 | `boards6.js`, `boardui6.js` | Backgammon: Regeln/Computer und Oberfläche |
+| `boards7.js`, `boardui7.js` | Memory, Kalaha, Käsekästchen, Nim |
+| `boards8.js`, `boardui8.js` | Mastermind, Würfelreihen, Halma, Fuchs und Gänse |
+| `boards9.js`, `boardui9.js` | Mau-Mau, Schnapsen, Rommé |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
 | `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |

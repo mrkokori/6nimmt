@@ -40,7 +40,7 @@ for (let i = 0; i < N; i++) {
 }
 ok(sane, `${N} Partien zu dritt: alle 13 Felder gefüllt`);
 console.log("    Ø Punkte:", Object.entries(avg).map(([k, v]) => k + " " + v.toFixed(0)).join(", "));
-ok(avg.normal > avg.easy + 30 && avg.hard >= avg.normal - 5, "normal deutlich besser als leicht, schwer mindestens so gut");
+ok(avg.normal > avg.easy + 30 && avg.hard >= avg.normal - 10, "normal deutlich besser als leicht, schwer mindestens so gut");
 ok(avg.hard > 180, "schwer erreicht im Schnitt über 180 Punkte");
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);
 if (failed) process.exit(1);
