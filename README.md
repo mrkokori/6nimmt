@@ -1,6 +1,6 @@
 # Spieleabend
 
-Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, **Dame**, **Vier gewinnt**, **Reversi**, **Tic-Tac-Toe**, **Gomoku**, **Kniffel**, **Schiffe versenken** und **Sternhalma** – gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
+Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, **Dame**, **Vier gewinnt**, **Reversi**, **Tic-Tac-Toe**, **Gomoku**, **Kniffel**, **Schiffe versenken**, **Sternhalma** und **Backgammon** – gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
 
 **Spiel öffnen:** https://mrkokori.github.io/6nimmt/
 
@@ -17,6 +17,7 @@ Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, *
 - **Kniffel** (1–6): Würfel purzeln, antippen zum Halten, Punkteblock für alle mit möglichen Punkten zum Antippen, Bonus oben und Kniffel-Bonus.
 - **Schiffe versenken** (2): Flotte zufällig aufstellen (neu verteilen, bis sie passt), dann schießen – Wasser platscht, Treffer explodieren, wer trifft, darf nochmal. Jeder sieht nur seine eigene Flotte: online bekommt jedes Handy nur seine Sicht, am selben Handy kommt zwischen den Zügen ein Weitergabe-Bildschirm. Auch der Computer sieht nur, was er beschossen hat.
 - **Sternhalma** (2–6): Sternbrett mit 121 Löchern, Murmeln hüpfen in Sprungketten übers Brett. Mit Blockade-Regel: Ist die Zielspitze voll und eigene Murmeln sind dabei, zählt das als Sieg.
+- **Backgammon** (2): Würfel rollen aufs Brett, Steine springen von Zunge zu Zunge, Geschlagene fliegen auf die Bar. Mit Pasch, Bar, Auswürfeln und der Pflicht, möglichst beide Würfel zu nutzen. Der schwere Computer prüft für seine besten Züge alle 21 Würfe des Gegners.
 
 Jedes Spiel gibt es gegen den Computer in drei Stärken (leicht, normal, schwer), am selben Handy und online. Laufende Partien gegen den Computer oder am selben Handy werden gespeichert und lassen sich fortsetzen.
 
@@ -45,6 +46,7 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `boards3.js`, `boardui3.js` | Kniffel: Regeln/Computer und Oberfläche |
 | `boards4.js`, `boardui4.js` | Schiffe versenken: Regeln/Computer und Oberfläche |
 | `boards5.js`, `boardui5.js` | Sternhalma: Regeln/Computer und Oberfläche |
+| `boards6.js`, `boardui6.js` | Backgammon: Regeln/Computer und Oberfläche |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
 | `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |

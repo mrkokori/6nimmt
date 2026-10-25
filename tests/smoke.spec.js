@@ -189,6 +189,8 @@ async function boardStep(page) {
     if (roll) { await roll.click({ force: true }).catch(() => {}); return; }
     return;
   }
+  const bgroll = await page.$(".hits .hit.bgroll");
+  if (bgroll) { await bgroll.click({ force: true }).catch(() => {}); return; }
   const tgt = await page.$$(".hits .hit.target, .hits .hit.remove, .hits .hit.col, .hits .hit.tcell");
   const g = await page.$$(".hits .hit.gcell");
   if (g.length) {
@@ -217,17 +219,17 @@ async function playBoardToEnd(pages, host, ms = 240000) {
   throw new Error("Partie nicht fertig geworden");
 }
 
-for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame", "Dame"], ["madn", "Mensch ärgere dich nicht"], ["reversi", "Reversi"], ["ttt", "Tic-Tac-Toe"], ["gomoku", "Gomoku"], ["kniffel", "Kniffel"], ["schiffe", "Schiffe versenken"], ["halma", "Sternhalma"]]) {
+for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame", "Dame"], ["madn", "Mensch ärgere dich nicht"], ["reversi", "Reversi"], ["ttt", "Tic-Tac-Toe"], ["gomoku", "Gomoku"], ["kniffel", "Kniffel"], ["schiffe", "Schiffe versenken"], ["halma", "Sternhalma"], ["backgammon", "Backgammon"]]) {
   test(`${label}: gegen Computer bis zum Ende`, async ({ page }) => {
     await setup(page, "Dominic");
     await page.click(`[data-game="${gid}"]`);
     await expect(page.locator("#bsetup-title")).toHaveText(label);
     if (gid !== "madn" && gid !== "kniffel") await page.click('#bsetup-level button[data-value="easy"]');
     else { test.setTimeout(500000); await page.click('[data-step="bsetup-count"][data-delta="-1"]'); await page.click('[data-step="bsetup-count"][data-delta="-1"]'); }
-    if (gid === "kniffel" || gid === "halma") test.setTimeout(500000);
+    if (gid === "kniffel" || gid === "halma" || gid === "backgammon") test.setTimeout(600000);
     await page.click("#bsetup-start");
     await expect(page.locator("#screen-board")).toBeVisible();
-    const title = await playBoardToEnd([page], page, gid === "madn" ? 400000 : 240000);
+    const title = await playBoardToEnd([page], page, ["madn", "backgammon", "halma", "kniffel"].includes(gid) ? 560000 : 240000);
     expect(title).toMatch(/gewinn|Unentschieden/);
     await page.click("text=Nochmal");
     await expect(page.locator("#screen-board")).toBeVisible();
@@ -248,7 +250,7 @@ test("Mühle am selben Handy: abwechselnd ziehen", async ({ page }) => {
   expect(page.errors).toEqual([]);
 });
 
-for (const [gid, label, bots] of [["c4", "Vier gewinnt", 0], ["madn", "Mensch ärgere dich nicht", 1], ["kniffel", "Kniffel", 0], ["schiffe", "Schiffe versenken", 0], ["halma", "Sternhalma", 1]]) {
+for (const [gid, label, bots] of [["c4", "Vier gewinnt", 0], ["madn", "Mensch ärgere dich nicht", 1], ["kniffel", "Kniffel", 0], ["schiffe", "Schiffe versenken", 0], ["halma", "Sternhalma", 1], ["backgammon", "Backgammon", 0]]) {
   test(`${label} online bis zum Ende`, async ({ browser }) => {
     test.setTimeout(500000);
     const host = await (await browser.newContext()).newPage();
