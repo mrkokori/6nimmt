@@ -44,6 +44,7 @@ async function playUntilRoundEnd(pages, host) {
 
 test("Gegen Computer: eine Runde bis zur Wertung", async ({ page }) => {
   await setup(page, "Dominic");
+  await page.click('[data-game="sechs"]');
   await page.click("text=Gegen Computer");
   await page.click("#bots-start");
   await expect(page.locator("#hand .card")).toHaveCount(10);
@@ -53,9 +54,11 @@ test("Gegen Computer: eine Runde bis zur Wertung", async ({ page }) => {
   // Partie bleibt gespeichert
   await page.click("#game-menu-btn");
   await page.click("text=Zum Menü (Partie bleibt gespeichert)");
+  await page.click('[data-game="sechs"]');
   await expect(page.locator("#resume-btn")).toBeVisible();
-  for (const s of ["Regeln", "Statistik", "Einstellungen"]) {
-    await page.click(`.home-links >> text=${s}`);
+  await page.click("#screen-sechs .back-btn");
+  for (const s of ["Statistik", "Einstellungen"]) {
+    await page.click(`.screen:not(.hidden) .home-links >> text=${s}`);
     await page.click(".screen:not(.hidden) .back-btn");
   }
   expect(page.errors).toEqual([]);
@@ -63,6 +66,7 @@ test("Gegen Computer: eine Runde bis zur Wertung", async ({ page }) => {
 
 test("Mehrere an einem Handy: Weitergeben und Runde", async ({ page }) => {
   await setup(page, "Dominic");
+  await page.click('[data-game="sechs"]');
   await page.click("text=Mehrere an einem Handy");
   await page.fill("#hotseat-list input >> nth=1", "Sonja");
   await page.click("#hotseat-add-bot");
@@ -82,13 +86,14 @@ test("Online: Raum erstellen, beitreten, Runde spielen, wiederverbinden", async 
   await setup(host, "Dominic");
   await setup(guest, "Sonja");
 
+  await host.click('[data-game="sechs"]');
   await host.click("text=Online mit Freunden");
   await host.click("#online-host");
   await expect(host.locator("#screen-lobby")).toBeVisible();
   const code = (await host.textContent("#lobby-code")).trim();
   expect(code).toMatch(/^[A-Z0-9]{5}$/);
 
-  await guest.click("text=Online mit Freunden");
+  await guest.click("#home-join");
   await guest.fill("#online-code", code.toLowerCase());
   await guest.click("#online-join");
   await expect(guest.locator("#lobby-list li")).toHaveCount(1 + 1);
@@ -104,7 +109,7 @@ test("Online: Raum erstellen, beitreten, Runde spielen, wiederverbinden", async 
   }
   const before = await guest.locator("#hand .card").count();
   await guest.reload();
-  await guest.click("text=Online mit Freunden");
+  await guest.click("#home-join");
   await guest.fill("#online-code", code);
   await guest.click("#online-join");
   await expect(guest.locator("#screen-game")).toBeVisible();
@@ -122,6 +127,7 @@ test("Online: Beitreten klappt, obwohl der Host gerade kurz weg war", async ({ b
   const guest = await (await browser.newContext()).newPage();
   await setup(host, "Dominic");
   await setup(guest, "Sonja");
+  await host.click('[data-game="sechs"]');
   await host.click("text=Online mit Freunden");
   await host.click("#online-host");
   await expect(host.locator("#screen-lobby")).toBeVisible();
@@ -133,7 +139,7 @@ test("Online: Beitreten klappt, obwohl der Host gerade kurz weg war", async ({ b
   await host.waitForTimeout(1000);
 
   // Genau jetzt tritt jemand bei
-  await guest.click("text=Online mit Freunden");
+  await guest.click("#home-join");
   await guest.fill("#online-code", code);
   await guest.click("#online-join");
   await expect(guest.locator("#online-join")).toHaveText(/Verbinde|Suche Raum|Warte auf Antwort/);
@@ -149,11 +155,12 @@ test("Online: aus der Lobby entfernter Gast bekommt Hinweis und tritt nicht wied
   const guest = await (await browser.newContext()).newPage();
   await setup(host, "Dominic");
   await setup(guest, "Sonja");
+  await host.click('[data-game="sechs"]');
   await host.click("text=Online mit Freunden");
   await host.click("#online-host");
   await expect(host.locator("#screen-lobby")).toBeVisible();
   const code = (await host.textContent("#lobby-code")).trim();
-  await guest.click("text=Online mit Freunden");
+  await guest.click("#home-join");
   await guest.fill("#online-code", code);
   await guest.click("#online-join");
   await expect(host.locator("#lobby-list li")).toHaveCount(2);

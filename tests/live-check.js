@@ -59,6 +59,7 @@ async function waitFor(fn, ms) {
     const g1 = await open(browser, "Sonja"); pages.push(g1);
     const g2 = await open(browser, "Paul"); pages.push(g2);
 
+    await host.click('[data-game="sechs"]');
     await host.click("text=Online mit Freunden");
     let t = Date.now();
     await host.click("#online-host");
@@ -66,7 +67,7 @@ async function waitFor(fn, ms) {
     const code = (await host.textContent("#lobby-code")).trim();
     note("Raum erstellen", `ok in ${Date.now() - t} ms, Code ${code}`);
 
-    await g1.click("text=Online mit Freunden");
+    await g1.click("#home-join");
     await g1.fill("#online-code", code);
     t = Date.now();
     await g1.click("#online-join");
@@ -77,7 +78,7 @@ async function waitFor(fn, ms) {
     // Host-Handy 20 s weg (gesperrt), genau dann tritt Paul bei
     await host.ctx.setOffline(true);
     await sleep(3000);
-    await g2.click("text=Online mit Freunden");
+    await g2.click("#home-join");
     await g2.fill("#online-code", code);
     t = Date.now();
     await g2.click("#online-join");

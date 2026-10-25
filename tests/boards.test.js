@@ -31,9 +31,8 @@ section("Vier gewinnt");
   for (const c of [1, 1, 2, 2, 3, 3]) G.apply(s, { col: c });
   ok(G.ai(s, "normal").col === 0 || G.ai(s, "normal").col === 4, "KI nimmt Sieg in einem Zug");
   s = G.create({});
-  for (const c of [1, 6, 2, 6, 3]) G.apply(s, { col: c });
-  const blk = G.ai(s, "normal").col;
-  ok(blk === 0 || blk === 4, "KI blockt drohende Vier");
+  for (const c of [0, 6, 1, 6, 2]) G.apply(s, { col: c });
+  ok(G.ai(s, "normal").col === 3, "KI blockt drohende Vier");
   let sane = true;
   for (let i = 0; i < 200; i++) { const r = playOut(G, G.create({}), rnd(G)); if (!r) sane = false; }
   ok(sane, "200 Zufallspartien enden sauber");
