@@ -88,13 +88,18 @@ section("Dame");
   let s = G.create();
   ok(s.board.filter(Boolean).length === 24, "24 Steine");
   ok(G.legal(s).length === 7, "Weiß hat zu Beginn 7 Züge");
-  // Schlagzwang
+  // Schlagzwang (Einstellung)
   const at = (r, c) => r * 8 + c;
-  s = G.create(); s.board = Array(64).fill(null);
+  s = G.create({ forced: true }); s.board = Array(64).fill(null);
   s.board[at(5, 2)] = { s: 0, k: false, id: "w1" }; s.board[at(4, 3)] = { s: 1, k: false, id: "b1" };
   s.board[at(6, 7)] = { s: 0, k: false, id: "w2" }; s.board[at(0, 1)] = { s: 1, k: false, id: "b9" };
   let l = G.legal(s);
   ok(l.length === 1 && l[0].caps[0] === at(4, 3), "Schlagzwang");
+  const free = G.create({ forced: false });
+  free.board = s.board.map((p) => (p ? Object.assign({}, p) : null));
+  const lf = G.legal(free);
+  ok(lf.some((m) => m.caps.length) && lf.some((m) => !m.caps.length && m.path[0] === at(6, 7)), "ohne Schlagzwang: schlagen erlaubt, andere Steine dürfen auch ziehen");
+  ok(G.create().forced === false, "Standard: ohne Schlagzwang");
   // Mehrfachschlag
   s.board[at(2, 5)] = { s: 1, k: false, id: "b2" };
   l = G.legal(s);
@@ -102,7 +107,7 @@ section("Dame");
   const ev = G.apply(s, l[0]);
   ok(ev[0].crowned === false && !s.board[at(4, 3)] && !s.board[at(2, 5)] && s.board[at(1, 6)], "beide Steine geschlagen");
   // Dame zieht weit
-  s = G.create(); s.board = Array(64).fill(null);
+  s = G.create({ forced: true }); s.board = Array(64).fill(null);
   s.board[at(7, 0)] = { s: 0, k: true, id: "w1" }; s.board[at(0, 1)] = { s: 1, k: false, id: "b1" };
   ok(G.legal(s).length === 7, "Dame zieht über die ganze Diagonale");
   s.board[at(4, 3)] = { s: 1, k: false, id: "b2" };

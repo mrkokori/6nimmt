@@ -449,3 +449,5 @@ input[type="text"] {
   .dice-btn { min-height: 64px; }
   .die-face { width: 46px; height: 46px; padding: 6px; }
 }
+
+#bsetup-forced button { font-size: 14px; padding: 0 8px; }

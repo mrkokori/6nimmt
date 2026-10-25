@@ -21,7 +21,8 @@ const BoardUI = (function () {
       <p>Wer nur noch drei Steine hat, darf springen, also auf jeden freien Punkt ziehen.</p>
       <p>Verloren hat, wer nur noch zwei Steine hat oder nicht mehr ziehen kann.</p>`,
     dame: `<p>Gespielt wird nur auf den dunklen Feldern. Steine ziehen schräg ein Feld nach vorne.</p>
-      <p>Schlagen ist Pflicht: Steht ein gegnerischer Stein schräg neben dir und dahinter ist frei, springst du darüber und nimmst ihn – auch rückwärts. Geht es danach weiter, muss weitergesprungen werden.</p>
+      <p>Steht ein gegnerischer Stein schräg neben dir und dahinter ist frei, springst du darüber und nimmst ihn – auch rückwärts. Geht es danach weiter, wird weitergesprungen.</p>
+      <p>Schlagzwang stellst du vor der Partie ein: Ist er aus, darfst du statt zu schlagen auch einen anderen Stein ziehen. Ist er an, musst du schlagen, wenn es geht.</p>
       <p>Wer die gegenüberliegende Grundreihe erreicht, wird zur Dame (♛). Damen ziehen und schlagen beliebig weit schräg.</p>
       <p>Verloren hat, wer keinen Stein mehr hat oder nicht mehr ziehen kann.</p>`,
     c4: `<p>Ihr werft abwechselnd einen Stein in eine Spalte, er fällt nach unten auf den untersten freien Platz.</p>
@@ -71,6 +72,8 @@ const BoardUI = (function () {
     $("bsetup-resume").classList.toggle("hidden", !(saved && saved.gid === setupGame && saved.state && !g.result(saved.state)));
     $("bsetup-count-field").classList.toggle("hidden", setupGame !== "madn");
     $("bsetup-first-field").classList.toggle("hidden", setupGame === "madn");
+    $("bsetup-forced-field").classList.toggle("hidden", setupGame !== "dame");
+    setSeg("bsetup-forced", settings.dameForced ? "on" : "off");
     if (!hotSeats.length || hotSeats.game !== setupGame) {
       hotSeats = [{ kind: "human", name: myName() }, { kind: "human", name: "Spieler 2" }];
       hotSeats.game = setupGame;
@@ -112,6 +115,7 @@ const BoardUI = (function () {
 
   function wireSetup() {
     $("bsetup-mode").addEventListener("change", renderMode);
+    $("bsetup-forced").addEventListener("change", () => { settings.dameForced = segValue("bsetup-forced") === "on"; saveSettings(); });
     $("bsetup-seats").addEventListener("input", (e) => { const i = e.target.dataset.i; if (i !== undefined && e.target.tagName === "INPUT") hotSeats[i].name = e.target.value; });
     $("bsetup-seats").addEventListener("change", (e) => { const i = e.target.dataset.i; if (i !== undefined && e.target.tagName === "SELECT") hotSeats[i].level = e.target.value; });
     $("bsetup-seats").addEventListener("click", (e) => {
@@ -167,7 +171,7 @@ const BoardUI = (function () {
   // Partie starten (Host / lokal)
   // ===================================================================
   function startHost(mode, gid, seats, net, code) {
-    const state = GAMES[gid].create({ players: seats.length });
+    const state = GAMES[gid].create({ players: seats.length, forced: gid === "dame" && !!settings.dameForced });
     begin({ gid, mode, seats: seats.map((s) => Object.assign({}, s)), state, net, code });
   }
 
@@ -491,7 +495,7 @@ const BoardUI = (function () {
     renderHits();
     renderStatus();
     renderDice();
-    $("board-info").textContent = G().name;
+    $("board-info").textContent = G().name + (bs.gid === "dame" ? (bs.state.forced ? " · mit Schlagzwang" : " · ohne Schlagzwang") : "");
   }
 
   function renderPlayers() {
@@ -638,7 +642,7 @@ const BoardUI = (function () {
         else text = you + (sel === null ? (st.onBoard[cur] === 3 ? "Du darfst springen – wähle einen Stein." : "Wähle einen Stein.") : "Wohin soll er ziehen?");
       } else if (bs.gid === "dame") {
         const caps = G().legal(st).some((m) => m.caps.length);
-        text = you + (sel === null ? (caps ? "Schlagzwang! Wähle einen Stein, der schlagen kann." : "Wähle einen Stein.") : "Wohin soll er ziehen?");
+        text = you + (sel === null ? (caps && st.forced ? "Schlagzwang! Wähle einen Stein, der schlagen kann." : caps ? "Wähle einen Stein – schlagen ist möglich." : "Wähle einen Stein.") : "Wohin soll er ziehen?");
       } else if (bs.gid === "madn") {
         text = you + (st.phase === "roll" ? (st.tries > 1 ? `Würfeln (${st.tries} Versuche).` : "Würfeln!") : "Wähle eine Figur.");
       }

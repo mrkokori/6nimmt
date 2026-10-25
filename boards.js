@@ -299,7 +299,8 @@
 
     const game = {
       id: "dame", name: "Dame", minPlayers: 2, maxPlayers: 2, N,
-      create() {
+      // forced: Schlagzwang (streng). Ohne: Schlagen ist erlaubt, aber freiwillig.
+      create(opts) {
         const board = Array(N * N).fill(null);
         let id = 0;
         for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
@@ -307,14 +308,14 @@
           if (r < 3) board[r * N + c] = { s: 1, k: false, id: "b" + id++ };
           else if (r > 4) board[r * N + c] = { s: 0, k: false, id: "w" + id++ };
         }
-        return { game: "dame", players: 2, board, turn: 0, quiet: 0, ply: 0, win: null, draw: false };
+        return { game: "dame", players: 2, board, turn: 0, quiet: 0, ply: 0, win: null, draw: false, forced: !!(opts && opts.forced) };
       },
       current: (s) => (s.win || s.draw ? -1 : s.turn),
       legal(s) {
         if (s.win || s.draw) return [];
-        return game.movesFor(s.board, s.turn);
+        return game.movesFor(s.board, s.turn, s.forced);
       },
-      movesFor(board, seat) {
+      movesFor(board, seat, forced) {
         const caps = [], quiet = [];
         for (let i = 0; i < N * N; i++) {
           const pc = board[i];
@@ -351,7 +352,7 @@
             if (!extended && taken.length) caps.push({ path, caps: taken });
           };
           dfs(r0, c0, [i], []);
-          if (caps.length) continue;
+          if (forced && caps.length) continue; // Schlagzwang: einfache Züge sind dann egal
           for (const [dr, dc] of DIRS) {
             if (!pc.k && dr !== forward(seat)) continue;
             let rr = r0 + dr, cc = c0 + dc;
@@ -362,7 +363,7 @@
             }
           }
         }
-        return caps.length ? caps : quiet;
+        return forced && caps.length ? caps : caps.concat(quiet);
       },
       apply(s, m) { return checked(game, s, m); },
       applyRaw(s, m, light) {
@@ -380,7 +381,7 @@
         s.ply++;
         s.quiet = m.caps.length || !pc.k ? 0 : s.quiet + 1;
         s.turn = 1 - s.turn;
-        if (game.movesFor(s.board, s.turn).length === 0) {
+        if (game.movesFor(s.board, s.turn, s.forced).length === 0) {
           s.win = { seat: 1 - s.turn };
           if (!light) events.push({ type: "win", seat: s.win.seat });
         } else if (s.quiet >= 50) { s.draw = true; if (!light) events.push({ type: "draw" }); }
@@ -388,7 +389,7 @@
       },
       result: (s) => (s.win ? { winners: [s.win.seat], draw: false } : s.draw ? { winners: [], draw: true } : null),
       play(s, m) {
-        const c = { board: s.board.map((p) => (p ? { s: p.s, k: p.k, id: p.id } : null)), turn: s.turn, quiet: s.quiet, ply: s.ply, win: null, draw: false };
+        const c = { board: s.board.map((p) => (p ? { s: p.s, k: p.k, id: p.id } : null)), turn: s.turn, quiet: s.quiet, ply: s.ply, win: null, draw: false, forced: s.forced };
         game.applyRaw(c, m, true);
         return c;
       },
