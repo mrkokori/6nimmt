@@ -48,6 +48,7 @@
     }).join("")}</div>`;
   }
   const meOf = () => { const v = K.viewSeat(); return v === undefined ? -1 : v; };
+  BoardUI.cardKit = { face, back, cardBtn, fly, oppsHTML, meOf, SUITS };
 
   // =====================================================================
   // Mau-Mau

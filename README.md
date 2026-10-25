@@ -31,6 +31,28 @@ Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, *
 - **Schnapsen** (2): 66 mit Atout, Ansagen (20/40), Atout tauschen, Zudrehen und Bummerl bis 7. Der schwere Computer rechnet das Endspiel genau durch.
 - **Rommé** (2–4): Zwei Kartenspiele mit 6 Jokern, Sätze und Reihen, erstes Auslegen ab 40 Punkten, danach anlegen.
 
+- **Kunterbunt** (2–6): Kartenspiel im Uno-Stil mit Aussetzen, Richtungswechsel, +2, Farbwahl und +4 (stapelbar) und dem „Letzte Karte!“-Knopf.
+- **Galgenmännchen** (1–4): Gemeinsames Rätselwort, reihum Buchstaben raten; das Männchen wächst Strich für Strich.
+- **Leiterspiel** (2–4): Leitern hoch, Schlangen runter, genau auf 100.
+- **Steckhalma** (allein): Das klassische Solitär-Brett mit 33 Löchern, Züge zurücknehmen möglich.
+- **Quarto** (2): 16 Figuren mit vier Eigenschaften – der Gegner sucht aus, welche du setzen musst.
+- **Pentago** (2): Kugel setzen, dann ein Viertel des Bretts drehen; fünf in einer Reihe gewinnt.
+- **2048** (allein): Wischen oder Pfeiltasten, Kacheln verschmelzen.
+- **Minesweeper** (allein): 9×9, 12×12 oder 16×16, erster Klick sicher, Fahnen per langem Druck.
+- **Mäxchen** (2–6): Verdeckt würfeln, ansagen, flunkern, anzweifeln – drei Leben.
+- **Zehntausend** (1–6): Sechs Würfel, Punkte zur Seite legen, weiter riskieren oder schreiben.
+- **Schach** (2): Alle Regeln inklusive Rochade, en passant, Umwandlung, Patt und Remisregeln; der Computer rechnet mit Alpha-Beta-Suche.
+- **Go** (2): 9×9 oder 13×13, Ko-Regel, Flächenwertung mit Komi; der schwere Computer spielt Monte-Carlo-Simulationen.
+- **Schwimmen** (2–6): 31 mit Tauschen, Schieben und Klopfen, drei Leben.
+- **Herzen** (4): Stichspiel mit Weitergeben, gebrochenem Herz, Pik-Dame und Mondschuss.
+- **Blackjack** (1–4): Gegen die Bank, 10 Runden mit Chips; der schwere Computer spielt Grundstrategie.
+- **Solitär** (allein): Klondike mit 1 oder 3 Karten ziehen; Karte antippen – sie springt an den besten Platz.
+- **Sudoku** (allein): Leicht, mittel, schwer, mit Notizen und Fehlermarkierung; jedes Rätsel hat genau eine Lösung.
+- **Stadt-Land-Fluss** (2–6): Buchstabe, sechs Kategorien, verdeckt schreiben, automatische Wertung; der Computer kennt für jeden Buchstaben Antworten.
+- **Inselsiedler** (2–4): Siedlungsspiel auf einer Sechseck-Insel mit Rohstoffen, Straßen, Siedlungen, Städten, Häfen, Räuber, Entwicklungskarten, längster Straße und größter Rittermacht.
+
+Auf der Startseite lassen sich die Spiele nach Kategorien filtern (Karten, Brett, Würfel, Knobeln, Allein).
+
 Bei den Kartenspielen sieht jeder nur seine eigenen Karten – online bekommt jedes Handy nur seine Sicht, am selben Handy kommt zwischen den Zügen ein Weitergabe-Bildschirm.
 
 Jedes Spiel gibt es gegen den Computer in drei Stärken (leicht, normal, schwer), am selben Handy und online. Laufende Partien gegen den Computer oder am selben Handy werden gespeichert und lassen sich fortsetzen.
@@ -64,6 +86,11 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `boards7.js`, `boardui7.js` | Memory, Kalaha, Käsekästchen, Nim |
 | `boards8.js`, `boardui8.js` | Mastermind, Würfelreihen, Halma, Fuchs und Gänse |
 | `boards9.js`, `boardui9.js` | Mau-Mau, Schnapsen, Rommé |
+| `boards10.js`, `boardui10.js` | Kunterbunt, Galgenmännchen, Leiterspiel, Steckhalma, Quarto |
+| `boards11.js`, `boardui11.js` | Pentago, 2048, Minesweeper, Mäxchen, Zehntausend |
+| `boards12.js`, `boardui12.js` | Schach, Go |
+| `boards13.js`, `boardui13.js` | Schwimmen, Herzen, Blackjack, Solitär, Sudoku, Stadt-Land-Fluss |
+| `boards14.js`, `boardui14.js` | Inselsiedler |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
 | `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |
