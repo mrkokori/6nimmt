@@ -1,94 +1,111 @@
-// Diagnose gegen die echte Live-Seite und echte öffentliche Server.
-// Läuft auf GitHub (Workflow "Live-Diagnose"), Ergebnisse erscheinen als
-// Hinweise (::notice) im Actions-Lauf.
+// Diagnose gegen die echte Live-Seite und die echten öffentlichen Server.
+// Läuft auf GitHub (Workflow "Live-Diagnose"); Ergebnisse erscheinen als
+// Hinweise (::notice) im Actions-Lauf, Fehler als ::error.
 const { chromium } = require("playwright");
+const fs = require("fs");
+const path = require("path");
 
 const SITE = process.env.SITE || "https://mrkokori.github.io/6nimmt/";
+const WANT = /const VERSION = "([^"]+)"/.exec(fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8"))[1];
 const note = (title, msg) => console.log(`::notice title=${title}::${String(msg).replace(/\n/g, " ")}`);
+const fail = (title, msg) => { console.log(`::error title=${title}::${String(msg).replace(/\n/g, " ")}`); process.exitCode = 1; };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function waitForDeploy() {
+  for (let i = 0; i < 60; i++) {
+    try {
+      const r = await fetch(SITE + "sw.js?nocache=" + Date.now());
+      const v = /const VERSION = "([^"]+)"/.exec(await r.text());
+      if (v && v[1] === WANT) return true;
+    } catch (e) {}
+    await sleep(10000);
+  }
+  return false;
+}
+
+async function open(browser, name) {
+  const ctx = await browser.newContext();
+  const p = await ctx.newPage();
+  p.ctx = ctx;
+  p.errs = [];
+  p.on("console", (m) => { if (m.type() === "error") p.errs.push(name + ": " + m.text().slice(0, 200)); });
+  p.on("pageerror", (e) => p.errs.push(name + " pageerror: " + e.message));
+  await p.addInitScript((n) => localStorage.setItem("sn6.settings", JSON.stringify({ name: n, speed: "fast", hints: true, vibrate: false })), name);
+  await p.goto(SITE + "?v=" + WANT);
+  return p;
+}
+
+async function step(p) {
+  if (await p.isVisible("#modal")) return;
+  const row = await p.$(".row.choosable");
+  if (row) { await row.click().catch(() => {}); return; }
+  const card = await p.$("#hand .card:not([disabled])");
+  if (card) { await card.click({ timeout: 800 }).catch(() => {}); await p.click("#play-btn", { timeout: 800 }).catch(() => {}); }
+}
+
+async function waitFor(fn, ms) {
+  const until = Date.now() + ms;
+  while (Date.now() < until) { if (await fn()) return true; await sleep(300); }
+  return false;
+}
 
 (async () => {
+  if (!(await waitForDeploy())) { fail("Version", "Live-Seite hat nach 10 Minuten noch nicht Version " + WANT); return; }
+  note("Version", WANT + " ist live");
   const browser = await chromium.launch();
-
-  // 1. Raum erstellen und beitreten über die echte Seite
+  const pages = [];
   try {
-    const host = await (await browser.newContext()).newPage();
-    const guest = await (await browser.newContext()).newPage();
-    const logs = [];
-    for (const [n, p] of [["host", host], ["guest", guest]]) {
-      p.on("console", (m) => logs.push(`${n}:${m.type()}:${m.text().slice(0, 160)}`));
-      p.on("pageerror", (e) => logs.push(`${n}:pageerror:${e.message}`));
-    }
-    await host.goto(SITE);
-    await guest.goto(SITE);
-    note("Version", await host.evaluate(() => (window.__app && window.__app.APP_VERSION) || "?"));
-    await host.click("text=Online mit Freunden");
-    await host.fill("#online-name", "Host");
-    const t0 = Date.now();
-    await host.click("#online-host");
-    const hostOk = await host.waitForSelector("#screen-lobby:not(.hidden)", { timeout: 25000 }).then(() => true).catch(() => false);
-    if (!hostOk) {
-      note("Raum erstellen", "FEHLER: " + (await host.textContent("#online-error")));
-    } else {
-      const code = (await host.textContent("#lobby-code")).trim();
-      note("Raum erstellen", `ok in ${Date.now() - t0} ms, Code ${code}`);
-      await guest.click("text=Online mit Freunden");
-      await guest.fill("#online-name", "Gast");
-      await guest.fill("#online-code", code);
-      const t1 = Date.now();
-      await guest.click("#online-join");
-      let outcome = "Zeitüberschreitung (50 s)";
-      for (let i = 0; i < 100; i++) {
-        await guest.waitForTimeout(500);
-        if (await guest.isVisible("#screen-lobby")) { outcome = `ok in ${Date.now() - t1} ms`; break; }
-        if (await guest.isVisible("#online-error")) { outcome = "FEHLER: " + (await guest.textContent("#online-error")); break; }
-      }
-      note("Beitreten", outcome + " | Knopf: " + (await guest.textContent("#online-join")));
-    }
-    const interesting = logs.filter((l) => /error|warn|peer|Peer/i.test(l)).slice(0, 12);
-    if (interesting.length) note("Konsole", interesting.join(" || "));
-  } catch (e) {
-    note("Ablauf", "ABBRUCH: " + e.message.split("\n")[0]);
-  }
+    const host = await open(browser, "Host"); pages.push(host);
+    const g1 = await open(browser, "Sonja"); pages.push(g1);
+    const g2 = await open(browser, "Paul"); pages.push(g2);
 
-  // 2. Netzwerk-Grundlagen aus einer neutralen Seite (ohne CSP der App)
-  const p = await (await browser.newContext()).newPage();
-  await p.goto("about:blank");
-  const net = await p.evaluate(async () => {
-    const out = {};
-    const tryFetch = async (u) => { try { const r = await fetch(u); return r.status + " " + (await r.text()).slice(0, 60); } catch (e) { return "ERR " + e.message; } };
-    out.peerjsId = await tryFetch("https://0.peerjs.com/peerjs/id?ts=" + Date.now());
-    // TURN-Server von PeerJS nur über Relay prüfen
-    const relay = await new Promise((resolve) => {
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: ["turn:eu-0.turn.peerjs.com:3478", "turn:us-0.turn.peerjs.com:3478"], username: "peerjs", credential: "peerjsp" }], iceTransportPolicy: "relay" });
-      const types = [];
-      pc.onicecandidate = (e) => { if (e.candidate) types.push(e.candidate.type + "@" + (e.candidate.address || "?")); };
-      pc.createDataChannel("x");
-      pc.createOffer().then((o) => pc.setLocalDescription(o));
-      setTimeout(() => { pc.close(); resolve(types.length ? types.join(",") : "keine Relay-Kandidaten"); }, 12000);
-    });
-    out.peerjsTurn = relay;
-    const stun = await new Promise((resolve) => {
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-      const types = new Set();
-      pc.onicecandidate = (e) => { if (e.candidate) types.add(e.candidate.type); };
-      pc.createDataChannel("x");
-      pc.createOffer().then((o) => pc.setLocalDescription(o));
-      setTimeout(() => { pc.close(); resolve([...types].join(",") || "keine"); }, 6000);
-    });
-    out.stun = stun;
-    const tryWs = (u, proto) => new Promise((resolve) => {
-      const t = Date.now();
-      let ws;
-      try { ws = proto ? new WebSocket(u, proto) : new WebSocket(u); } catch (e) { resolve("ERR " + e.message); return; }
-      const to = setTimeout(() => { try { ws.close(); } catch (e) {} resolve("Timeout"); }, 8000);
-      ws.onopen = () => { clearTimeout(to); ws.close(); resolve("offen in " + (Date.now() - t) + " ms"); };
-      ws.onerror = () => { clearTimeout(to); resolve("Fehler"); };
-    });
-    out.mqttEmqx = await tryWs("wss://broker.emqx.io:8084/mqtt", "mqtt");
-    out.mqttHivemq = await tryWs("wss://broker.hivemq.com:8884/mqtt", "mqtt");
-    out.mqttMosquitto = await tryWs("wss://test.mosquitto.org:8081", "mqtt");
-    return out;
-  });
-  for (const [k, v] of Object.entries(net)) note(k, v);
-  await browser.close();
+    await host.click("text=Online mit Freunden");
+    let t = Date.now();
+    await host.click("#online-host");
+    if (!(await waitFor(() => host.isVisible("#screen-lobby"), 25000))) { fail("Raum erstellen", await host.textContent("#online-error")); return; }
+    const code = (await host.textContent("#lobby-code")).trim();
+    note("Raum erstellen", `ok in ${Date.now() - t} ms, Code ${code}`);
+
+    await g1.click("text=Online mit Freunden");
+    await g1.fill("#online-code", code);
+    t = Date.now();
+    await g1.click("#online-join");
+    const ok1 = await waitFor(() => g1.isVisible("#screen-lobby"), 30000);
+    if (!ok1) { fail("Beitreten", (await g1.textContent("#online-join")) + " | " + (await g1.textContent("#online-error"))); return; }
+    note("Beitreten", `ok in ${Date.now() - t} ms`);
+
+    // Host-Handy 20 s weg (gesperrt), genau dann tritt Paul bei
+    await host.ctx.setOffline(true);
+    await sleep(3000);
+    await g2.click("text=Online mit Freunden");
+    await g2.fill("#online-code", code);
+    t = Date.now();
+    await g2.click("#online-join");
+    await sleep(17000);
+    note("Host offline", "Paul sieht währenddessen: " + (await g2.textContent("#online-join")) + (await g2.isVisible("#online-error") ? " | Fehler: " + (await g2.textContent("#online-error")) : ""));
+    await host.ctx.setOffline(false);
+    await host.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    const ok2 = await waitFor(async () => (await host.$$("#lobby-list li")).length === 3 && (await g2.isVisible("#screen-lobby")), 45000);
+    if (ok2) note("Beitreten bei abwesendem Host", `ok, ${Math.round((Date.now() - t) / 1000)} s nach dem Tippen`);
+    else fail("Beitreten bei abwesendem Host", "Paul nicht in der Lobby: " + (await g2.textContent("#online-join")) + " | " + (await g2.textContent("#online-error")));
+
+    // Spielen
+    await host.click("#lobby-start");
+    if (!(await waitFor(async () => (await g1.$$("#hand .card")).length === 10 && (await g2.$$("#hand .card")).length === 10, 20000))) { fail("Start", "Gäste haben keine Karten bekommen"); return; }
+    note("Start", "alle haben 10 Karten");
+    t = Date.now();
+    const played = await waitFor(async () => {
+      await Promise.all([step(host), step(g1), step(g2)]);
+      return (await g2.$$("#hand .card")).length <= 7 && (await host.$$("#hand .card")).length <= 7;
+    }, 120000);
+    if (played) note("Spielen", `3 Stiche online gespielt in ${Math.round((Date.now() - t) / 1000)} s`);
+    else fail("Spielen", "Stiche kamen nicht durch");
+  } catch (e) {
+    fail("Ablauf", e.message.split("\n")[0]);
+  } finally {
+    const errs = pages.flatMap((p) => p.errs).filter((e) => !/ERR_INTERNET_DISCONNECTED|net::ERR/.test(e));
+    if (errs.length) fail("Konsole", errs.slice(0, 6).join(" || "));
+    else note("Konsole", "keine Fehler");
+    await browser.close();
+  }
 })();

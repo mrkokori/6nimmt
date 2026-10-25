@@ -3,7 +3,7 @@
 // oder zu langsamem Netz die Version aus dem Cache. Nach dem ersten Öffnen
 // funktioniert die App damit auch ohne Empfang unterwegs.
 // Bei jeder Veröffentlichung hier UND in app.js (APP_VERSION) erhöhen.
-const VERSION = "2026.10.25.4";
+const VERSION = "2026.10.25.5";
 const CACHE_NAME = "sechs-nimmt-" + VERSION;
 const NETWORK_TIMEOUT_MS = 3000;
 const ASSETS = [
@@ -13,7 +13,7 @@ const ASSETS = [
   "app.js",
   "engine.js",
   "net.js",
-  "lib/peerjs.min.js",
+  "lib/mqtt.min.js",
   "lib/qrcode.js",
   "manifest.json",
   "icon-192.png",

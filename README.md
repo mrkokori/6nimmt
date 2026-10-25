@@ -14,13 +14,15 @@ Dazu: Hinweise auf der Hand (welche Karte die sechste wäre oder zu tief ist), S
 
 ## So funktioniert das Online-Spiel
 
-Es gibt keinen eigenen Server. Die Handys verbinden sich per WebRTC direkt miteinander; der kostenlose öffentliche PeerJS-Server (`0.peerjs.com`) vermittelt nur den Verbindungsaufbau. Das Handy, das den Raum erstellt hat, hält das Spiel: Es mischt, lässt die Computergegner ziehen und schickt jedem nur seine eigenen Karten. Deshalb muss es die App offen lassen, bis die Partie vorbei ist.
+Es gibt keinen eigenen Server. Die Handys tauschen ihre Züge über einen kostenlosen öffentlichen MQTT-Server aus (`broker.emqx.io`, ersatzweise `broker.hivemq.com`) – über ganz normale verschlüsselte Websocket-Verbindungen, die in jedem WLAN und Mobilnetz funktionieren. Die Inhalte sind zusätzlich mit einem aus dem Raumcode abgeleiteten Schlüssel verschlüsselt, sodass andere Nutzer des öffentlichen Servers keine Karten mitlesen können.
 
-In seltenen Fällen (manche Firmen-WLANs oder Mobilfunknetze) klappt die Direktverbindung nicht. Dann hilft meist, vom WLAN ins Mobilnetz zu wechseln oder umgekehrt.
+Das Handy, das den Raum erstellt hat, hält das Spiel: Es mischt, lässt die Computergegner ziehen und schickt jedem nur seine eigenen Karten. Ist es kurz gesperrt, hebt der Server die Züge der anderen auf und stellt sie zu, sobald es wieder da ist.
+
+(Frühere Versionen haben die Handys per WebRTC direkt verbunden. Das scheiterte oft, weil Router solche Direktverbindungen blockieren und die Ausweich-Server von PeerJS nicht mehr funktionieren – siehe `tests/live-check.js`.)
 
 ## Datenschutz
 
-Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. Beim Online-Spiel gehen die Spielzüge direkt an die Mitspieler; der Vermittlungsserver sieht nur den Raumcode.
+Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. Beim Online-Spiel laufen die Spielzüge verschlüsselt über den öffentlichen MQTT-Server.
 
 ## Aufbau
 
@@ -31,18 +33,19 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `app.js` | Oberfläche, Spielablauf, Animationen |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
-| `lib/peerjs.min.js` | WebRTC-Verbindungen (Fremdbibliothek, MIT-Lizenz) |
+| `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |
 | `lib/qrcode.js` | QR-Code für den Raum (Fremdbibliothek, MIT-Lizenz) |
 | `sw.js` | Service Worker für Offline-Betrieb |
 | `tests/engine.test.js` | Tests der Regeln und Bots |
 | `tests/smoke.spec.js` | Browsertest aller drei Spielmodi |
+| `tests/live-check.js` | Prüft die Live-Seite gegen die echten öffentlichen Server (GitHub Actions) |
 
 ## Entwicklung
 
 ```
 npm install
 npm test               # Regeln und Bots
-npm run test:browser   # alle Spielmodi in Chromium, inkl. Online über lokalen Vermittlungsserver
+npm run test:browser   # alle Spielmodi in Chromium, Online über lokalen MQTT-Server
 ```
 
 Bei jeder Veröffentlichung die Version in `sw.js` und `app.js` (`APP_VERSION`) erhöhen, damit Handys das Update bekommen.

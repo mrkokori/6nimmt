@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://0.peerjs.com wss://0.peerjs.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' wss://broker.emqx.io:8084 wss://broker.hivemq.com:8884; object-src 'none'; base-uri 'self'; form-action 'self';">
 <title>6 nimmt</title>
 <link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
@@ -102,7 +102,7 @@
     <div class="or">oder</div>
     <label class="field">Raumcode<input type="text" id="online-code" maxlength="5" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="z. B. K7QPM"></label>
     <button type="button" class="big-btn" id="online-join">Beitreten</button>
-    <p class="hint">Die Handys verbinden sich direkt miteinander. Wer den Raum erstellt, muss die App offen lassen, bis die Partie vorbei ist.</p>
+    <p class="hint">Die Handys tauschen ihre Züge verschlüsselt über einen öffentlichen Spieleserver aus – das klappt in jedem WLAN und im Mobilnetz. Wer den Raum erstellt, hält das Spiel: Ist dieses Handy kurz gesperrt, warten die anderen, bis es wieder da ist.</p>
     <p class="error hidden" id="online-error" role="alert"></p>
   </div>
 </section>
@@ -213,7 +213,7 @@
 
 <script src="engine.js"></script>
 <script src="lib/qrcode.js"></script>
-<script src="lib/peerjs.min.js"></script>
+<script src="lib/mqtt.min.js"></script>
 <script src="net.js"></script>
 <script src="app.js"></script>
 </body>

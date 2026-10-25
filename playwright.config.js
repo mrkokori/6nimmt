@@ -8,7 +8,7 @@ module.exports = defineConfig({
   timeout: 180000,
   webServer: [
     { command: "node tests/static-server.js", port: 8787, reuseExistingServer: !process.env.CI },
-    { command: "node tests/peer-server.js", url: "http://127.0.0.1:9000/health", reuseExistingServer: !process.env.CI }
+    { command: "node tests/mqtt-server.js", url: "http://127.0.0.1:9001/health", reuseExistingServer: !process.env.CI }
   ],
   use: {
     baseURL: "http://localhost:8787",

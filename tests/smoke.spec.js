@@ -1,5 +1,5 @@
 // Browser-Test: spielt in echtem Chromium je eine Runde gegen den Computer, am
-// selben Handy und online (zwei Browserfenster über einen lokalen PeerJS-Server)
+// selben Handy und online (zwei Browserfenster über einen lokalen MQTT-Server)
 // und prüft, dass dabei keine Konsolen- oder CSP-Fehler auftreten.
 const { test, expect } = require("@playwright/test");
 
@@ -7,15 +7,15 @@ async function setup(page, name) {
   page.errors = [];
   page.on("console", (m) => { if (m.type() === "error" && !/^Failed to load resource:/.test(m.text())) page.errors.push(m.text()); });
   page.on("pageerror", (e) => page.errors.push("pageerror: " + e.message));
-  // Online-Test gegen den lokalen Vermittlungsserver statt 0.peerjs.com
+  // Online-Test gegen den lokalen MQTT-Server statt der öffentlichen
   await page.route("**/index.html", async (route) => {
     const r = await route.fetch();
-    const body = (await r.text()).replace("connect-src 'self'", "connect-src 'self' http://127.0.0.1:9000 ws://127.0.0.1:9000");
+    const body = (await r.text()).replace("connect-src 'self'", "connect-src 'self' ws://127.0.0.1:9001");
     await route.fulfill({ response: r, body });
   });
   await page.addInitScript((n) => {
     localStorage.setItem("sn6.settings", JSON.stringify({ name: n, speed: "fast", hints: true, vibrate: false }));
-    localStorage.setItem("sn6.peerServer", JSON.stringify({ host: "127.0.0.1", port: 9000, path: "/myapp" }));
+    localStorage.setItem("sn6.mqtt", JSON.stringify(["ws://127.0.0.1:9001"]));
   }, name);
   await page.goto("/index.html");
 }
@@ -128,7 +128,7 @@ test("Online: Beitreten klappt, obwohl der Host gerade kurz weg war", async ({ b
   const code = (await host.textContent("#lobby-code")).trim();
 
   // Host ist 16 Sekunden "weg" (Bildschirm gesperrt), der Server vergisst den Raum
-  const dropped = await (await fetch("http://127.0.0.1:9000/test/drop/sechsnimmt-mrk-" + code + "?ms=16000")).text();
+  const dropped = await (await fetch("http://127.0.0.1:9001/test/drop/snm-" + code + "-host?ms=16000")).text();
   expect(dropped).toBe("dropped");
   await host.waitForTimeout(1000);
 
@@ -136,7 +136,7 @@ test("Online: Beitreten klappt, obwohl der Host gerade kurz weg war", async ({ b
   await guest.click("text=Online mit Freunden");
   await guest.fill("#online-code", code);
   await guest.click("#online-join");
-  await expect(guest.locator("#online-join")).toHaveText(/Verbinde|Suche Raum/);
+  await expect(guest.locator("#online-join")).toHaveText(/Verbinde|Suche Raum|Warte auf Antwort/);
 
   await expect(host.locator("#lobby-list li")).toHaveCount(2, { timeout: 40000 });
   await expect(guest.locator("#screen-lobby")).toBeVisible();

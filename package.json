@@ -8,6 +8,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
-    "peer": "^1.0.2"
+    "aedes": "^0.51.3",
+    "websocket-stream": "^5.5.2",
+    "ws": "^8.22.0"
   }
 }

@@ -2,34 +2,30 @@
 
 Für die folgenden Dateien gelten ausschließlich die hier genannten Lizenzen.
 
-## PeerJS
+## MQTT.js
 
-- **Datei:** `lib/peerjs.min.js`
-- **Version:** 1.5.5 (npm-Paket `peerjs`)
-- **Urheber:** Michelle Bu, Eric Zhang und Mitwirkende
-- **Quelle:** https://github.com/peers/peerjs
+- **Datei:** `lib/mqtt.min.js`
+- **Version:** 5.16.1 (npm-Paket `mqtt`)
+- **Urheber:** MQTT.js-Mitwirkende
+- **Quelle:** https://github.com/mqttjs/MQTT.js
 - **Lizenz:** MIT
 
 ```
-Copyright (c) 2015 Michelle Bu and Eric Zhang, http://peerjs.com
+The MIT License (MIT)
+=====================
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Copyright (c) 2015-2016 MQTT.js contributors
+---------------------------------------
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+*MQTT.js contributors listed at <https://github.com/mqttjs/MQTT.js#contributors>*
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+Copyright 2011-2014 by Adam Rudd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 ## QR Code Generator for JavaScript
@@ -68,7 +64,7 @@ THE SOFTWARE.
 
 ## Nur für die Entwicklung (nicht Teil der App)
 
-- **@playwright/test** (Apache-2.0) wird ausschließlich für den Browser-Test verwendet und nicht mit der App ausgeliefert.
+- **@playwright/test** (Apache-2.0), **aedes**, **websocket-stream** und **ws** (MIT) werden ausschließlich für die Tests verwendet (lokaler MQTT-Server) und nicht mit der App ausgeliefert.
 
 ## Spielidee
 

@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.4";
+const APP_VERSION = "2026.10.25.5";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
@@ -965,10 +965,11 @@ function joinRoom(raw) {
   btn.disabled = true;
   btn.textContent = "Verbinde …";
   $("online-error").classList.add("hidden");
+  clientId(); // vor dem Verbinden festlegen, Net nutzt dieselbe Kennung
   const net = Net.join(code, {
     onSearching() { btn.textContent = "Suche Raum " + code + " …"; },
-    onOpen() {
-      resetBtn();
+    onOpen(first) {
+      if (first) btn.textContent = "Warte auf Antwort …";
       net.send({ t: "hello", name, clientId: clientId() });
       $("conn-info").textContent = "Raum " + code;
     },
@@ -983,6 +984,7 @@ function joinRoom(raw) {
 
 function clientMessage(msg) {
   if (!session || session.mode !== "client") return;
+  if (msg.t === "lobby" || msg.t === "state") { $("online-join").disabled = false; $("online-join").textContent = "Beitreten"; }
   if (msg.t === "lobby") {
     lobby.players = Array.isArray(msg.players) ? msg.players.slice(0, 10) : [];
     lobby.target = Number(msg.target) || 66;
