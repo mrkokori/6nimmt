@@ -172,7 +172,8 @@ test("Online: aus der Lobby entfernter Gast bekommt Hinweis und tritt nicht wied
 });
 
 // ---------- Brettspiele ----------
-const NEW_GAMES = ["memory", "kalaha", "dots", "nim", "mastermind", "wuerfel", "halma16", "fuchs", "maumau", "schnapsen", "romme"];
+const NEW_GAMES = ["memory", "kalaha", "dots", "nim", "mastermind", "wuerfel", "halma16", "fuchs", "maumau", "schnapsen", "romme",
+  "kunterbunt", "galgen", "leiter", "steck", "quarto", "pentago", "g2048", "mines", "maexchen", "zehntausend"];
 async function boardStep(page) {
   if (await page.isVisible("#modal")) return;
   const gid = await page.evaluate(() => BoardUI.current() && BoardUI.current().gid).catch(() => null);
@@ -348,14 +349,16 @@ test("Schiffe versenken am selben Handy: Weitergabe verdeckt die Flotten", async
 // ---------------------------------------------------------------------------
 // Neue Spiele
 // ---------------------------------------------------------------------------
-const NEW_LABELS = { memory: "Memory", kalaha: "Kalaha", dots: "Käsekästchen", nim: "Nim", mastermind: "Mastermind", wuerfel: "Würfelreihen", halma16: "Halma", fuchs: "Fuchs und Gänse", maumau: "Mau-Mau", schnapsen: "Schnapsen", romme: "Rommé" };
+const NEW_LABELS = { memory: "Memory", kalaha: "Kalaha", dots: "Käsekästchen", nim: "Nim", mastermind: "Mastermind", wuerfel: "Würfelreihen", halma16: "Halma", fuchs: "Fuchs und Gänse", maumau: "Mau-Mau", schnapsen: "Schnapsen", romme: "Rommé",
+  kunterbunt: "Kunterbunt", galgen: "Galgenmännchen", leiter: "Leiterspiel", steck: "Steckhalma", quarto: "Quarto", pentago: "Pentago", g2048: "2048", mines: "Minesweeper", maexchen: "Mäxchen", zehntausend: "Zehntausend" };
 for (const [gid, label] of Object.entries(NEW_LABELS)) {
   test(`${label}: gegen Computer bis zum Ende`, async ({ page }) => {
     test.setTimeout(600000);
     await setup(page, "Dominic");
     await page.click(`[data-game="${gid}"]`);
     await expect(page.locator("#bsetup-title")).toHaveText(label);
-    await page.click('#bsetup-level button[data-value="easy"]');
+    if (await page.isVisible("#bsetup-level")) await page.click('#bsetup-level button[data-value="easy"]');
+    if (gid === "zehntausend") await page.click('#bsetup-variant button[data-value="5000"]');
     // Mehrspieler-Spiele: auf zwei Spieler reduzieren
     if (await page.isVisible("#bsetup-count-field")) {
       for (let i = 0; i < 5; i++) await page.click('[data-step="bsetup-count"][data-delta="-1"]', { timeout: 2000 }).catch(() => {});
@@ -371,7 +374,7 @@ for (const [gid, label] of Object.entries(NEW_LABELS)) {
   });
 }
 
-for (const gid of ["maumau", "schnapsen", "romme", "memory", "mastermind", "wuerfel", "kalaha"]) {
+for (const gid of ["maumau", "schnapsen", "romme", "memory", "mastermind", "wuerfel", "kalaha", "kunterbunt", "maexchen", "galgen", "quarto", "pentago", "zehntausend"]) {
   const label = NEW_LABELS[gid];
   test(`${label} online bis zum Ende`, async ({ browser }) => {
     test.setTimeout(600000);
@@ -381,6 +384,7 @@ for (const gid of ["maumau", "schnapsen", "romme", "memory", "mastermind", "wuer
     await setup(guest, "Sonja");
     await host.click(`[data-game="${gid}"]`);
     if (gid === "schnapsen") await host.click('#bsetup-variant button[data-value="1"]');
+    if (gid === "zehntausend") await host.click('#bsetup-variant button[data-value="5000"]');
     await host.click('#bsetup-mode button[data-value="online"]');
     await host.click("#bsetup-start");
     await host.click("#online-host");
@@ -393,7 +397,7 @@ for (const gid of ["maumau", "schnapsen", "romme", "memory", "mastermind", "wuer
     await host.click("#lobby-start");
     await expect(guest.locator("#screen-board")).toBeVisible();
     // Verdeckte Karten: der Gast sieht die Hand des Hosts nicht
-    if (["maumau", "schnapsen", "romme"].includes(gid)) {
+    if (["maumau", "schnapsen", "romme", "kunterbunt"].includes(gid)) {
       const hidden = await guest.evaluate(() => BoardUI.current().state.hands[0].every((c) => c === -1));
       expect(hidden).toBe(true);
     }
@@ -418,5 +422,26 @@ test("Mau-Mau am selben Handy: Weitergabe verdeckt die Karten", async ({ page })
   await expect(page.locator(".cg-hand .pcb")).toHaveCount(5);
   const title = await playBoardToEnd([page], page, 280000);
   expect(title).toMatch(/gewinn/);
+  expect(page.errors).toEqual([]);
+});
+
+test("Startseite: Kategorien filtern die Spiele", async ({ page }) => {
+  await setup(page, "Dominic");
+  await page.click('#home-cats [data-value="karten"]');
+  await expect(page.locator('[data-game="maumau"]')).toBeVisible();
+  await expect(page.locator('[data-game="muehle"]')).toBeHidden();
+  await page.click('#home-cats [data-value="allein"]');
+  await expect(page.locator('[data-game="g2048"]')).toBeVisible();
+  await page.click('[data-game="g2048"]');
+  await expect(page.locator("#bsetup-mode-field")).toBeHidden();
+  await page.click("#bsetup-start");
+  await expect(page.locator("#screen-board")).toBeVisible();
+  for (const k of ["ArrowDown", "ArrowLeft", "ArrowUp", "ArrowRight"]) { await page.keyboard.press(k); await page.waitForTimeout(300); }
+  await page.waitForTimeout(600);
+  expect(await page.evaluate(() => BoardUI.current().state.ply)).toBeGreaterThan(0);
+  await page.click("#board-menu-btn");
+  await page.click("text=Zum Menü");
+  await page.click('[data-go="home"]');
+  await page.click('#home-cats [data-value="alle"]');
   expect(page.errors).toEqual([]);
 });

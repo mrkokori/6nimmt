@@ -26,98 +26,146 @@
     <h1 class="picker-title">Spieleabend</h1>
     <p class="tagline">Klassiker für zwischendurch – gegen den Computer, am selben Handy oder online.</p>
   </header>
+  <div class="segmented cat-bar" id="home-cats" role="tablist" aria-label="Kategorie">
+    <button type="button" data-value="alle" class="on">Alle</button>
+    <button type="button" data-value="karten">Karten</button>
+    <button type="button" data-value="brett">Brett</button>
+    <button type="button" data-value="wuerfel">Würfel</button>
+    <button type="button" data-value="knobeln">Knobeln</button>
+    <button type="button" data-value="allein">Allein</button>
+  </div>
   <div class="game-tiles">
-    <button type="button" class="game-tile" data-game="sechs">
+    <button type="button" class="game-tile" data-game="sechs" data-cat="karten">
       <span class="tile-art art-sechs" aria-hidden="true"><i class="tc b1">12</i><i class="tc b3">30</i><i class="tc b5">55</i><i class="ts">6</i></span>
       <span class="tile-name">6 nimmt</span><span class="tile-sub">Karten · 2–10</span>
     </button>
-    <button type="button" class="game-tile" data-game="madn">
+    <button type="button" class="game-tile" data-game="madn" data-cat="brett wuerfel">
       <span class="tile-art art-madn" aria-hidden="true"><i class="pawn p0"></i><i class="pawn p1"></i><i class="pawn p2"></i><i class="pawn p3"></i><i class="die">⚅</i></span>
       <span class="tile-name">Mensch ärgere dich nicht</span><span class="tile-sub">Würfeln · 2–4</span>
     </button>
-    <button type="button" class="game-tile" data-game="muehle">
+    <button type="button" class="game-tile" data-game="muehle" data-cat="brett">
       <span class="tile-art art-muehle" aria-hidden="true"><svg viewBox="0 0 60 60"><rect x="4" y="4" width="52" height="52"/><rect x="14" y="14" width="32" height="32"/><rect x="24" y="24" width="12" height="12"/><path d="M30 4V24M30 36V56M4 30H24M36 30H56"/><circle class="w" cx="4" cy="4" r="5"/><circle class="w" cx="30" cy="4" r="5"/><circle class="w" cx="56" cy="4" r="5"/><circle class="b" cx="14" cy="46" r="5"/><circle class="b" cx="46" cy="30" r="5"/></svg></span>
       <span class="tile-name">Mühle</span><span class="tile-sub">Strategie · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="dame">
+    <button type="button" class="game-tile" data-game="dame" data-cat="brett">
       <span class="tile-art art-dame" aria-hidden="true"><i class="chk w"></i><i class="chk b"></i><i class="chk w k">♛</i></span>
       <span class="tile-name">Dame</span><span class="tile-sub">Strategie · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="c4">
+    <button type="button" class="game-tile" data-game="c4" data-cat="brett">
       <span class="tile-art art-c4" aria-hidden="true"><i class="disc y"></i><i class="disc r"></i><i class="disc y"></i><i class="disc y"></i><i class="disc r"></i><i class="disc r"></i></span>
       <span class="tile-name">Vier gewinnt</span><span class="tile-sub">Taktik · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="reversi">
+    <button type="button" class="game-tile" data-game="reversi" data-cat="brett">
       <span class="tile-art art-reversi" aria-hidden="true"><i class="rd b"></i><i class="rd w"></i><i class="rd w"></i><i class="rd b"></i></span>
       <span class="tile-name">Reversi</span><span class="tile-sub">Strategie · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="ttt">
+    <button type="button" class="game-tile" data-game="ttt" data-cat="brett knobeln">
       <span class="tile-art art-ttt" aria-hidden="true"><i>✕</i><i class="o">◯</i><i>✕</i><i class="o">◯</i><i>✕</i><i></i></span>
       <span class="tile-name">Tic-Tac-Toe</span><span class="tile-sub">Klassisch &amp; Ultimate · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="gomoku">
+    <button type="button" class="game-tile" data-game="gomoku" data-cat="brett">
       <span class="tile-art art-gomoku" aria-hidden="true"><i class="gs b"></i><i class="gs b"></i><i class="gs b"></i><i class="gs b"></i><i class="gs w"></i></span>
       <span class="tile-name">Gomoku</span><span class="tile-sub">Fünf in einer Reihe · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="kniffel">
+    <button type="button" class="game-tile" data-game="kniffel" data-cat="wuerfel allein">
       <span class="tile-art art-kniffel" aria-hidden="true"><i class="kd">⚄</i><i class="kd">⚄</i><i class="kd">⚄</i><i class="kd">⚄</i><i class="kd">⚄</i></span>
       <span class="tile-name">Kniffel</span><span class="tile-sub">Würfeln · 1–6</span>
     </button>
-    <button type="button" class="game-tile" data-game="schiffe">
+    <button type="button" class="game-tile" data-game="schiffe" data-cat="knobeln">
       <span class="tile-art art-schiffe" aria-hidden="true"><i class="w"></i><i class="sh"></i><i class="sh"></i><i class="sh"></i><i class="w x">✕</i><i class="w"></i></span>
       <span class="tile-name">Schiffe versenken</span><span class="tile-sub">Taktik · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="halma">
+    <button type="button" class="game-tile" data-game="halma" data-cat="brett">
       <span class="tile-art art-halma" aria-hidden="true"><svg viewBox="0 0 60 60"><polygon points="30,2 54,44 6,44"/><polygon points="30,58 6,16 54,16"/><circle class="a" cx="30" cy="10" r="4"/><circle class="b" cx="30" cy="50" r="4"/><circle class="c" cx="12" cy="40" r="4"/><circle class="d" cx="48" cy="20" r="4"/></svg></span>
       <span class="tile-name">Sternhalma</span><span class="tile-sub">Springen · 2–6</span>
     </button>
-    <button type="button" class="game-tile" data-game="backgammon">
+    <button type="button" class="game-tile" data-game="backgammon" data-cat="brett wuerfel">
       <span class="tile-art art-backgammon" aria-hidden="true"><svg viewBox="0 0 70 50"><rect width="70" height="50" rx="4"/><path class="a" d="M3 2L11 2L7 22Z M19 2L27 2L23 22Z M43 2L51 2L47 22Z M59 2L67 2L63 22Z"/><path class="b" d="M11 48L19 48L15 28Z M27 48L35 48L31 28Z M51 48L59 48L55 28Z"/><circle class="w" cx="7" cy="6" r="3.6"/><circle class="w" cx="7" cy="13" r="3.6"/><circle class="k" cx="55" cy="44" r="3.6"/><circle class="k" cx="55" cy="37" r="3.6"/><circle class="k" cx="31" cy="44" r="3.6"/></svg></span>
       <span class="tile-name">Backgammon</span><span class="tile-sub">Würfeln · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="memory">
+    <button type="button" class="game-tile" data-game="memory" data-cat="knobeln allein">
       <span class="tile-art art-memory" aria-hidden="true"><i class="mc"></i><i class="mc up">🦊</i><i class="mc up">🦊</i><i class="mc"></i></span>
       <span class="tile-name">Memory</span><span class="tile-sub">Merken · 1–4</span>
     </button>
-    <button type="button" class="game-tile" data-game="kalaha">
+    <button type="button" class="game-tile" data-game="kalaha" data-cat="brett">
       <span class="tile-art art-kalaha" aria-hidden="true"><svg viewBox="0 0 70 34"><rect class="b" width="70" height="34" rx="8"/><rect class="p" x="3" y="5" width="8" height="24" rx="4"/><rect class="p" x="59" y="5" width="8" height="24" rx="4"/><circle class="p" cx="20" cy="10" r="5"/><circle class="p" cx="35" cy="10" r="5"/><circle class="p" cx="50" cy="10" r="5"/><circle class="p" cx="20" cy="24" r="5"/><circle class="p" cx="35" cy="24" r="5"/><circle class="p" cx="50" cy="24" r="5"/><circle class="s" cx="34" cy="23" r="1.8"/><circle class="s" cx="37" cy="25" r="1.8"/><circle class="s" cx="19" cy="10" r="1.8"/><circle class="s" cx="63" cy="12" r="1.8"/><circle class="s" cx="63" cy="17" r="1.8"/></svg></span>
       <span class="tile-name">Kalaha</span><span class="tile-sub">Steine säen · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="dots">
+    <button type="button" class="game-tile" data-game="dots" data-cat="knobeln">
       <span class="tile-art art-dots" aria-hidden="true"><svg viewBox="0 0 54 54"><rect x="7" y="7" width="20" height="20"/><path class="a" d="M7 7H27V27"/><path class="b" d="M7 7V27H27M27 7H47"/><circle cx="7" cy="7" r="3"/><circle cx="27" cy="7" r="3"/><circle cx="47" cy="7" r="3"/><circle cx="7" cy="27" r="3"/><circle cx="27" cy="27" r="3"/><circle cx="47" cy="27" r="3"/><circle cx="7" cy="47" r="3"/><circle cx="27" cy="47" r="3"/><circle cx="47" cy="47" r="3"/></svg></span>
       <span class="tile-name">Käsekästchen</span><span class="tile-sub">Striche ziehen · 2–4</span>
     </button>
-    <button type="button" class="game-tile" data-game="nim">
+    <button type="button" class="game-tile" data-game="nim" data-cat="knobeln">
       <span class="tile-art art-nim" aria-hidden="true"><i></i><i></i><i></i><i class="t"></i><i class="t"></i></span>
       <span class="tile-name">Nim</span><span class="tile-sub">Streichhölzer · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="mastermind">
+    <button type="button" class="game-tile" data-game="mastermind" data-cat="knobeln allein">
       <span class="tile-art art-mastermind" aria-hidden="true"><i class="mp c0"></i><i class="mp c1"></i><i class="mp c2"></i><i class="mp c3"></i></span>
       <span class="tile-name">Mastermind</span><span class="tile-sub">Code knacken · 1–4</span>
     </button>
-    <button type="button" class="game-tile" data-game="wuerfel">
+    <button type="button" class="game-tile" data-game="wuerfel" data-cat="wuerfel">
       <span class="tile-art art-wuerfel" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i><i class="b"></i></span>
       <span class="tile-name">Würfelreihen</span><span class="tile-sub">Ankreuzen · 2–5</span>
     </button>
-    <button type="button" class="game-tile" data-game="halma16">
+    <button type="button" class="game-tile" data-game="halma16" data-cat="brett">
       <span class="tile-art art-halma16" aria-hidden="true"><svg viewBox="0 0 8 8"><rect class="l" width="8" height="8"/><path class="d" d="M1 0h1v1h-1zM3 0h1v1h-1zM5 0h1v1h-1zM7 0h1v1h-1zM0 1h1v1h-1zM2 1h1v1h-1zM4 1h1v1h-1zM6 1h1v1h-1zM1 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1z"/><circle class="a" cx=".5" cy=".5" r=".38"/><circle class="a" cx="1.5" cy=".5" r=".38"/><circle class="a" cx=".5" cy="1.5" r=".38"/><circle class="b" cx="7.5" cy="7.5" r=".38"/><circle class="b" cx="6.5" cy="7.5" r=".38"/><circle class="b" cx="7.5" cy="6.5" r=".38"/></svg></span>
       <span class="tile-name">Halma</span><span class="tile-sub">Springen · 2–4</span>
     </button>
-    <button type="button" class="game-tile" data-game="fuchs">
+    <button type="button" class="game-tile" data-game="fuchs" data-cat="brett">
       <span class="tile-art art-fuchs" aria-hidden="true"><i class="gs"></i><i class="gs"></i><i class="fx">🦊</i><i class="gs"></i></span>
       <span class="tile-name">Fuchs und Gänse</span><span class="tile-sub">Jagd · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="maumau">
+    <button type="button" class="game-tile" data-game="maumau" data-cat="karten">
       <span class="tile-art art-cards" aria-hidden="true"><i class="tc">7<b>♥</b></i><i class="tc k">B<b>♣</b></i><i class="tc">A<b>♦</b></i></span>
       <span class="tile-name">Mau-Mau</span><span class="tile-sub">Karten · 2–5</span>
     </button>
-    <button type="button" class="game-tile" data-game="schnapsen">
+    <button type="button" class="game-tile" data-game="schnapsen" data-cat="karten">
       <span class="tile-art art-cards" aria-hidden="true"><i class="tc">K<b>♥</b></i><i class="tc">D<b>♥</b></i><i class="tc k">A<b>♠</b></i></span>
       <span class="tile-name">Schnapsen</span><span class="tile-sub">66 · 2</span>
     </button>
-    <button type="button" class="game-tile" data-game="romme">
+    <button type="button" class="game-tile" data-game="romme" data-cat="karten">
       <span class="tile-art art-cards" aria-hidden="true"><i class="tc k">5<b>♣</b></i><i class="tc k">6<b>♣</b></i><i class="tc j">★</i></span>
       <span class="tile-name">Rommé</span><span class="tile-sub">Karten · 2–4</span>
+    </button>
+    <button type="button" class="game-tile" data-game="kunterbunt" data-cat="karten">
+      <span class="tile-art art-kunter" aria-hidden="true"><i class="kc r">7</i><i class="kc y">⊘</i><i class="kc g">+2</i><i class="kc k">★</i></span>
+      <span class="tile-name">Kunterbunt</span><span class="tile-sub">Karten · 2–6</span>
+    </button>
+    <button type="button" class="game-tile" data-game="galgen" data-cat="knobeln allein">
+      <span class="tile-art art-galgen" aria-hidden="true"><svg viewBox="0 0 60 60"><path d="M8 56H40M16 56V6H40V14"/><circle cx="40" cy="20" r="6"/><path d="M40 26V40M40 30L32 36M40 30L48 36M40 40L34 50M40 40L46 50"/></svg><i class="gl">_ A _ _ E</i></span>
+      <span class="tile-name">Galgenmännchen</span><span class="tile-sub">Wörter · 1–4</span>
+    </button>
+    <button type="button" class="game-tile" data-game="leiter" data-cat="brett wuerfel">
+      <span class="tile-art art-leiter" aria-hidden="true"><svg viewBox="0 0 60 60"><rect width="60" height="60" rx="6"/><path class="l" d="M14 54L26 8M22 56L34 10M16 46L24 48M18 38L26 40M20 30L28 32M22 22L30 24M24 14L32 16"/><path class="s" d="M48 10C30 20 56 30 38 40S44 52 34 56"/></svg></span>
+      <span class="tile-name">Leiterspiel</span><span class="tile-sub">Würfeln · 2–4</span>
+    </button>
+    <button type="button" class="game-tile" data-game="steck" data-cat="allein knobeln">
+      <span class="tile-art art-steck" aria-hidden="true"><svg viewBox="0 0 56 56"><path class="b" d="M18 2H38V18H54V38H38V54H18V38H2V18H18Z"/><circle cx="23" cy="8" r="3"/><circle cx="33" cy="8" r="3"/><circle cx="23" cy="18" r="3"/><circle cx="33" cy="18" r="3"/><circle cx="8" cy="23" r="3"/><circle cx="18" cy="23" r="3"/><circle cx="38" cy="33" r="3"/><circle cx="48" cy="33" r="3"/><circle class="e" cx="28" cy="28" r="3"/><circle cx="23" cy="48" r="3"/></svg></span>
+      <span class="tile-name">Steckhalma</span><span class="tile-sub">Knobeln · allein</span>
+    </button>
+    <button type="button" class="game-tile" data-game="quarto" data-cat="brett knobeln">
+      <span class="tile-art art-quarto" aria-hidden="true"><i class="qp t d r"></i><i class="qp s l q"></i><i class="qp t l r h"></i><i class="qp s d q h"></i></span>
+      <span class="tile-name">Quarto</span><span class="tile-sub">Taktik · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="pentago" data-cat="brett">
+      <span class="tile-art art-pentago" aria-hidden="true"><svg viewBox="0 0 56 56"><rect x="2" y="2" width="25" height="25" rx="4"/><rect x="29" y="2" width="25" height="25" rx="4"/><rect x="2" y="29" width="25" height="25" rx="4"/><rect x="29" y="29" width="25" height="25" rx="4"/><circle class="w" cx="10" cy="10" r="4"/><circle class="w" cx="19" cy="19" r="4"/><circle class="k" cx="37" cy="10" r="4"/><circle class="w" cx="37" cy="37" r="4"/><circle class="k" cx="10" cy="46" r="4"/><path class="a" d="M44 22A10 10 0 0 0 50 12" /></svg></span>
+      <span class="tile-name">Pentago</span><span class="tile-sub">Drehen · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="g2048" data-cat="allein">
+      <span class="tile-art art-2048" aria-hidden="true"><i class="t2">2</i><i class="t8">8</i><i class="t64">64</i><i class="t2k">2048</i></span>
+      <span class="tile-name">2048</span><span class="tile-sub">Schieben · allein</span>
+    </button>
+    <button type="button" class="game-tile" data-game="mines" data-cat="allein knobeln">
+      <span class="tile-art art-mines" aria-hidden="true"><i class="o">1</i><i class="o">2</i><i>🚩</i><i class="o">1</i><i>💣</i><i class="o"></i></span>
+      <span class="tile-name">Minesweeper</span><span class="tile-sub">Knobeln · allein</span>
+    </button>
+    <button type="button" class="game-tile" data-game="maexchen" data-cat="wuerfel">
+      <span class="tile-art art-maex" aria-hidden="true"><i class="kd">⚁</i><i class="kd">⚀</i><i class="cup"></i></span>
+      <span class="tile-name">Mäxchen</span><span class="tile-sub">Bluffen · 2–6</span>
+    </button>
+    <button type="button" class="game-tile" data-game="zehntausend" data-cat="wuerfel allein">
+      <span class="tile-art art-kniffel" aria-hidden="true"><i class="kd">⚀</i><i class="kd">⚀</i><i class="kd">⚀</i><i class="kd">⚄</i><i class="kd">⚂</i><i class="kd">⚅</i></span>
+      <span class="tile-name">Zehntausend</span><span class="tile-sub">Würfeln · 1–6</span>
     </button>
   </div>
   <button type="button" class="big-btn" id="home-join">Einem Raum beitreten</button>
@@ -258,7 +306,7 @@
   <header class="bar"><button type="button" class="back-btn" data-go="home" aria-label="Zurück">‹</button><h2 id="bsetup-title"></h2></header>
   <div class="form">
     <button type="button" class="big-btn hidden" id="bsetup-resume">Partie fortsetzen</button>
-    <div class="field">Spielen
+    <div class="field" id="bsetup-mode-field">Spielen
       <div class="segmented" id="bsetup-mode">
         <button type="button" data-value="bots" class="on">Computer</button>
         <button type="button" data-value="hotseat">Am Handy</button>
@@ -270,7 +318,7 @@
       <div class="field" id="bsetup-count-field">Computergegner
         <div class="stepper"><button type="button" class="step-btn" data-step="bsetup-count" data-delta="-1" aria-label="Weniger">−</button><output id="bsetup-count" data-min="1" data-max="3">3</output><button type="button" class="step-btn" data-step="bsetup-count" data-delta="1" aria-label="Mehr">+</button></div>
       </div>
-      <div class="field">Stärke
+      <div class="field" id="bsetup-level-field">Stärke
         <div class="segmented" id="bsetup-level">
           <button type="button" data-value="easy">Leicht</button>
           <button type="button" data-value="normal" class="on">Normal</button>
@@ -406,6 +454,8 @@
 <script src="boards7.js"></script>
 <script src="boards8.js"></script>
 <script src="boards9.js"></script>
+<script src="boards10.js"></script>
+<script src="boards11.js"></script>
 <script src="app.js"></script>
 <script src="boardui.js"></script>
 <script src="boardui2.js"></script>
@@ -416,5 +466,7 @@
 <script src="boardui7.js"></script>
 <script src="boardui8.js"></script>
 <script src="boardui9.js"></script>
+<script src="boardui10.js"></script>
+<script src="boardui11.js"></script>
 </body>
 </html>

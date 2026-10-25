@@ -87,8 +87,12 @@ const BoardUI = (function () {
     const saved = store.get("sn6.bgame", null);
     $("bsetup-resume").classList.toggle("hidden", !(saved && saved.gid === setupGame && saved.state && !g.result(saved.state)));
     const multi = g.maxPlayers > 2;
-    $("bsetup-count-field").classList.toggle("hidden", !multi);
-    $("bsetup-first-field").classList.toggle("hidden", multi);
+    const solo = g.maxPlayers === 1;
+    $("bsetup-mode-field").classList.toggle("hidden", solo);
+    $("bsetup-level-field").classList.toggle("hidden", solo);
+    if (solo) setSeg("bsetup-mode", "bots");
+    $("bsetup-count-field").classList.toggle("hidden", !multi || solo);
+    $("bsetup-first-field").classList.toggle("hidden", multi || solo);
     const cnt = $("bsetup-count");
     cnt.dataset.max = String(g.maxPlayers - 1);
     cnt.dataset.min = String(Math.max(0, (g.minPlayers || 2) - 1));
@@ -175,7 +179,8 @@ const BoardUI = (function () {
         const level = segValue("bsetup-level");
         const names = shuffleCopy(BOT_NAMES);
         const me = { name, kind: "human" };
-        if (GAMES[setupGame].maxPlayers > 2) {
+        if (GAMES[setupGame].maxPlayers === 1) seats = [me];
+        else if (GAMES[setupGame].maxPlayers > 2) {
           seats = [me];
           for (let i = 0; i < Number($("bsetup-count").textContent); i++) seats.push({ name: names[i], kind: "bot", level });
         } else {

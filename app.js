@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.16";
+const APP_VERSION = "2026.10.26.1";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
@@ -117,6 +117,14 @@ document.addEventListener("click", (e) => {
 });
 // Startseite: Spiel wählen
 let onlineGame = null; // für welches Spiel ein Raum erstellt wird (null = nur beitreten)
+// Kategorien auf der Startseite
+function applyCat(cat) {
+  setSeg("home-cats", cat);
+  document.querySelectorAll(".game-tile[data-cat]").forEach((t) => t.classList.toggle("hidden", cat !== "alle" && !t.dataset.cat.split(" ").includes(cat)));
+  store.set("sn6.cat", cat);
+}
+$("home-cats").addEventListener("click", (e) => { const b = e.target.closest("[data-value]"); if (b) applyCat(b.dataset.value); });
+applyCat(store.get("sn6.cat", "alle"));
 const GAME_NAMES = { sechs: "6 nimmt" };
 const MAX_PLAYERS = { sechs: 10 };
 for (const [k, g] of Object.entries(window.Boards)) if (g && g.id === k) { GAME_NAMES[k] = g.name; MAX_PLAYERS[k] = g.maxPlayers; }
