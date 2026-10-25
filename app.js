@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.2";
+const APP_VERSION = "2026.10.25.3";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
@@ -55,8 +55,24 @@ function toast(text, info = false) {
   toastTimer = setTimeout(() => t.classList.add("hidden"), 2200 * SPEED[settings.speed]);
 }
 
+// ---------- Bildschirm anlassen ----------
+// Gesperrte Handys pausieren die Seite – online fliegt man dann raus.
+let wakeLock = null;
+let wantAwake = false;
+async function keepAwake(on) {
+  wantAwake = on;
+  try {
+    if (on && !wakeLock && navigator.wakeLock && document.visibilityState === "visible") {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) { wakeLock = null; }
+}
+document.addEventListener("visibilitychange", () => { if (wantAwake && document.visibilityState === "visible") keepAwake(true); });
+
 // ---------- Bildschirme ----------
 function show(name) {
+  keepAwake(name === "lobby" || name === "game");
   document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== "screen-" + name));
   window.scrollTo(0, 0);
   if (name === "home") renderHome();
@@ -789,6 +805,12 @@ $("online-host").addEventListener("click", () => {
     },
     onMessage: hostMessage,
     onLeave: hostLeave,
+    onStatus(s) {
+      if (!lobby) return;
+      lobby.netStatus = s;
+      if (!$("screen-lobby").classList.contains("hidden")) renderLobby();
+      if (session && session.mode === "online") $("conn-info").textContent = s === "ok" ? "Raum " + lobby.code : "Raum wird neu angemeldet …";
+    },
     onError(text) { $("online-host").disabled = false; onlineError(text); }
   });
   if (!lobby.net) $("online-host").disabled = false;
@@ -862,7 +884,9 @@ function renderLobby() {
     setSeg("lobby-target", lobby.target);
     $("lobby-start").disabled = lobby.seats.length < 2;
     $("lobby-add-bot").disabled = lobby.seats.length >= 10;
-    $("lobby-status").textContent = lobby.seats.length < 2 ? "Warte auf Mitspieler …" : `${lobby.seats.length} Spieler bereit.`;
+    $("lobby-status").textContent = lobby.netStatus === "reconnecting"
+      ? "Raum wird beim Vermittlungsserver neu angemeldet …"
+      : lobby.seats.length < 2 ? "Warte auf Mitspieler … Lass die App dabei offen und den Bildschirm an." : `${lobby.seats.length} Spieler bereit.`;
     lobby.seats.forEach((s) => { if (s.kind === "remote" && s.connected) lobby.net.send(s.peerId, lobbyPayload()); });
   } else {
     $("lobby-status").textContent = `Warte, bis ${players[0] ? players[0].name : "der Host"} die Partie startet. Spielende bei ${lobby.target}.`;
@@ -916,19 +940,24 @@ function joinRoom(raw) {
   if (code.length !== 5) { onlineError("Der Raumcode hat 5 Zeichen."); return; }
   const name = $("online-name").value.trim() || "Gast";
   settings.name = name; saveSettings();
-  $("online-join").disabled = true;
+  if (session && session.mode === "client" && session.net) { try { session.net.close(); } catch (e) {} }
+  const btn = $("online-join");
+  const resetBtn = () => { btn.disabled = false; btn.textContent = "Beitreten"; };
+  btn.disabled = true;
+  btn.textContent = "Verbinde …";
   $("online-error").classList.add("hidden");
   const net = Net.join(code, {
+    onSearching() { btn.textContent = "Suche Raum " + code + " …"; },
     onOpen() {
-      $("online-join").disabled = false;
+      resetBtn();
       net.send({ t: "hello", name, clientId: clientId() });
       $("conn-info").textContent = "Raum " + code;
     },
     onMessage: clientMessage,
     onTrouble() { $("conn-info").textContent = "Verbindung wird wiederhergestellt …"; },
-    onError(text) { $("online-join").disabled = false; onlineError(text); }
+    onError(text) { resetBtn(); onlineError(text); }
   });
-  if (!net) { $("online-join").disabled = false; return; }
+  if (!net) { resetBtn(); return; }
   lobby = { isHost: false, net, code, players: [], target: 66 };
   session = { mode: "client", net, mySeat: -1 };
 }

@@ -114,3 +114,32 @@ test("Online: Raum erstellen, beitreten, Runde spielen, wiederverbinden", async 
   await expect(guest.locator("#modal-title")).toHaveText(/Runde 1 vorbei/);
   expect(host.errors.concat(guest.errors)).toEqual([]);
 });
+
+test("Online: Beitreten klappt, obwohl der Host gerade kurz weg war", async ({ browser }) => {
+  // Nachgestellt: Host-Handy wird gesperrt bzw. wechselt in eine andere App,
+  // der Vermittlungsserver vergisst den Raum, genau dann tritt jemand bei.
+  const host = await (await browser.newContext()).newPage();
+  const guest = await (await browser.newContext()).newPage();
+  await setup(host, "Dominic");
+  await setup(guest, "Sonja");
+  await host.click("text=Online mit Freunden");
+  await host.click("#online-host");
+  await expect(host.locator("#screen-lobby")).toBeVisible();
+  const code = (await host.textContent("#lobby-code")).trim();
+
+  // Host ist 16 Sekunden "weg" (Bildschirm gesperrt), der Server vergisst den Raum
+  const dropped = await (await fetch("http://127.0.0.1:9000/test/drop/sechsnimmt-mrk-" + code + "?ms=16000")).text();
+  expect(dropped).toBe("dropped");
+  await host.waitForTimeout(1000);
+
+  // Genau jetzt tritt jemand bei
+  await guest.click("text=Online mit Freunden");
+  await guest.fill("#online-code", code);
+  await guest.click("#online-join");
+  await expect(guest.locator("#online-join")).toHaveText(/Verbinde|Suche Raum/);
+
+  await expect(host.locator("#lobby-list li")).toHaveCount(2, { timeout: 40000 });
+  await expect(guest.locator("#screen-lobby")).toBeVisible();
+  await expect(host.locator("#lobby-code")).toHaveText(code);
+  expect(guest.errors).toEqual([]);
+});
