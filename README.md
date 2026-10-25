@@ -2,7 +2,7 @@
 
 Das Kartenspiel „6 nimmt!“ als Web-App: gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
 
-**Spiel öffnen:** https://mrkokori.github.io/6-nimmt/
+**Spiel öffnen:** https://mrkokori.github.io/6nimmt/
 
 ## Spielmodi
 
