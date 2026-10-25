@@ -49,7 +49,10 @@ Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, *
 - **Solitär** (allein): Klondike mit 1 oder 3 Karten ziehen; Karte antippen – sie springt an den besten Platz.
 - **Sudoku** (allein): Leicht, mittel, schwer, mit Notizen und Fehlermarkierung; jedes Rätsel hat genau eine Lösung.
 - **Stadt-Land-Fluss** (2–6): Buchstabe, sechs Kategorien, verdeckt schreiben, automatische Wertung; der Computer kennt für jeden Buchstaben Antworten.
-- **Inselsiedler** (2–4): Siedlungsspiel auf einer Sechseck-Insel mit Rohstoffen, Straßen, Siedlungen, Städten, Häfen, Räuber, Entwicklungskarten, längster Straße und größter Rittermacht.
+- **Inselsiedler** (2–4): Siedlungsspiel auf einer Sechseck-Insel mit Rohstoffen, Straßen, Siedlungen, Städten, Häfen, Räuber, Entwicklungskarten, längster Straße und größter Rittermacht. Mit Handel zwischen Spielern (Angebot an alle, Annehmen/Ablehnen), selbst gewähltem Abwerfen bei der 7 und Opferwahl beim Räuber.
+- **Domino** (2–4): Doppel-Sechs mit Ziehstapel, eine Runde oder bis 50/100 Punkte.
+- **Hex** (2): Rot verbindet oben–unten, Blau links–rechts; 7×7, 9×9 oder 11×11. Der Computer rechnet mit Zufallspartien.
+- **FreeCell** (allein): Acht offene Stapel, vier freie Zellen; Karte antippen springt an den besten Platz.
 
 Auf der Startseite lassen sich die Spiele nach Kategorien filtern (Karten, Brett, Würfel, Knobeln, Allein).
 
@@ -91,6 +94,7 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `boards12.js`, `boardui12.js` | Schach, Go |
 | `boards13.js`, `boardui13.js` | Schwimmen, Herzen, Blackjack, Solitär, Sudoku, Stadt-Land-Fluss |
 | `boards14.js`, `boardui14.js` | Inselsiedler |
+| `boards15.js`, `boardui15.js` | Domino, Hex, FreeCell |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
 | `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |

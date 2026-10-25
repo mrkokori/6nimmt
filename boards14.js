@@ -90,7 +90,16 @@
       s.dice = null; s.played = false; s.freeRoads = 0;
       return s;
     },
-    current: (s) => (s.win ? -1 : s.turn),
+    current: (s) => (s.win ? -1 : s.phase === "discard" ? s.discardQ[0] : s.phase === "offer" ? s.offerQ[0] : s.turn),
+    // Vorschlag zum Abwerfen (die häufigsten Rohstoffe zuerst)
+    autoDiscard(s, seat) {
+      const hh = Object.assign({}, s.hands[seat]), out = emptyHand();
+      let k = s.discardNeed[seat];
+      while (k--) { const r = RES.slice().sort((x, y) => hh[y] - hh[x])[0]; hh[r]--; out[r]++; }
+      return out;
+    },
+    victimsOf(s, hex, seat) { return [...new Set(HEX[hex].v.map((v) => s.build[v]).filter((b) => b && b.o !== seat && total(s.hands[b.o]) > 0).map((b) => b.o))]; },
+    validBundle(b) { return b && typeof b === "object" && RES.every((r) => b[r] === undefined || (Number.isInteger(b[r]) && b[r] >= 0 && b[r] <= 500)) && Object.keys(b).every((k) => RES.includes(k)); },
     vp(s, seat, includeHidden = true) {
       let v = 0;
       s.build.forEach((b) => { if (b && b.o === seat) v += b.t; });
@@ -139,7 +148,10 @@
     },
     legal(s) {
       if (s.win) return [];
-      const seat = s.turn, out = [];
+      const seat = IS.current(s), out = [];
+      if (s.phase === "discard") return [{ type: "discard", cards: IS.autoDiscard(s, seat) }];
+      if (s.phase === "steal") return s.victims.map((from) => ({ type: "steal", from }));
+      if (s.phase === "offer") { const o = []; if (canPay(s.hands[seat], s.offer.get)) o.push({ type: "accept" }); o.push({ type: "decline" }); return o; }
       if (s.phase === "setup") {
         if (s.step === "settlement") IS.settleSpots(s, seat, true).forEach((v) => out.push({ type: "settle", v }));
         else IS.roadSpots(s, seat, s.lastSettle).forEach((e) => out.push({ type: "road", e }));
@@ -170,7 +182,21 @@
     },
     apply(s, m) {
       if (s.win || !m || typeof m !== "object") return null;
+      const seat = IS.current(s);
+      if (m.type === "discard") {
+        if (s.phase !== "discard" || !IS.validBundle(m.cards)) return null;
+        const c = Object.assign(emptyHand(), m.cards);
+        if (total(c) !== s.discardNeed[seat] || !canPay(s.hands[seat], c)) return null;
+        return IS.applyRaw(s, { type: "discard", cards: c });
+      }
+      if (m.type === "offer") {
+        if (s.phase !== "main" || (s.offers || 0) >= 3 || !IS.validBundle(m.give) || !IS.validBundle(m.get)) return null;
+        const give = Object.assign(emptyHand(), m.give), get = Object.assign(emptyHand(), m.get);
+        if (!total(give) || !total(get) || RES.some((r) => give[r] && get[r]) || !canPay(s.hands[seat], give)) return null;
+        return IS.applyRaw(s, { type: "offer", give, get });
+      }
       const norm = { type: m.type };
+      if (m.from !== undefined) norm.from = m.from;
       for (const k of ["v", "e", "hex", "card", "give", "get"]) if (m[k] !== undefined) norm[k] = m[k];
       if (m.res !== undefined) norm.res = m.res;
       const key = JSON.stringify(norm);
@@ -178,8 +204,39 @@
       return found ? IS.applyRaw(s, found) : null;
     },
     applyRaw(s, m) {
-      const seat = s.turn, ev = [], h = s.hands[seat];
+      const seat = IS.current(s), ev = [], h = s.hands[seat];
       s.ply++;
+      if (m.type === "discard") {
+        RES.forEach((r) => (h[r] -= m.cards[r]));
+        ev.push({ type: "discard", seat, cards: m.cards, n: total(m.cards) });
+        s.discardQ.shift();
+        if (!s.discardQ.length) s.phase = "robber";
+        return ev;
+      }
+      if (m.type === "steal") return IS.steal(s, m.from, ev);
+      if (m.type === "offer") {
+        s.offers = (s.offers || 0) + 1;
+        s.offer = { from: seat, give: m.give, get: m.get };
+        s.offerQ = [];
+        for (let k = 1; k < s.players; k++) { const i = (seat + k) % s.players; if (canPay(s.hands[i], m.get)) s.offerQ.push(i); }
+        ev.push({ type: "offer", seat, give: m.give, get: m.get, asked: s.offerQ.slice() });
+        if (!s.offerQ.length) { s.offer = null; ev.push({ type: "nobody", seat }); return ev; }
+        s.phase = "offer";
+        return ev;
+      }
+      if (m.type === "accept") {
+        const o = s.offer, from = s.hands[o.from];
+        RES.forEach((r) => { from[r] -= o.give[r]; h[r] += o.give[r]; h[r] -= o.get[r]; from[r] += o.get[r]; });
+        ev.push({ type: "accept", seat, from: o.from, give: o.give, get: o.get });
+        s.offer = null; s.offerQ = []; s.phase = "main";
+        return ev;
+      }
+      if (m.type === "decline") {
+        ev.push({ type: "decline", seat });
+        s.offerQ.shift();
+        if (!s.offerQ.length) { ev.push({ type: "nobody", seat: s.offer.from }); s.offer = null; s.phase = "main"; }
+        return ev;
+      }
       if (s.phase === "setup") {
         if (m.type === "settle") {
           s.build[m.v] = { o: seat, t: 1 };
@@ -203,17 +260,12 @@
         const a = 1 + Math.floor(rand(s) * 6), b = 1 + Math.floor(rand(s) * 6), sum = a + b;
         s.dice = [a, b];
         if (sum === 7) {
-          // Wer mehr als 7 Karten hat, gibt die Hälfte ab (die häufigsten zuerst)
-          const lost = s.hands.map((hh) => {
-            const n = total(hh);
-            if (n <= 7) return null;
-            let k = Math.floor(n / 2);
-            const out = emptyHand();
-            while (k--) { const r = RES.slice().sort((x, y) => hh[y] - hh[x])[0]; hh[r]--; out[r]++; }
-            return out;
-          });
-          ev.push({ type: "roll", seat, dice: [a, b], sum, gains: [], lost });
-          s.phase = "robber";
+          // Wer mehr als 7 Karten hat, gibt die Hälfte ab – selbst gewählt, reihum
+          s.discardNeed = s.hands.map((hh) => (total(hh) > 7 ? Math.floor(total(hh) / 2) : 0));
+          s.discardQ = [];
+          for (let k = 0; k < s.players; k++) { const i = (seat + k) % s.players; if (s.discardNeed[i]) s.discardQ.push(i); }
+          ev.push({ type: "roll", seat, dice: [a, b], sum, gains: [], discard: s.discardNeed.slice() });
+          s.phase = s.discardQ.length ? "discard" : "robber";
           return ev;
         }
         const gains = [];
@@ -227,18 +279,10 @@
       }
       if (m.type === "robber") {
         s.robber = m.hex;
-        const victims = [...new Set(HEX[m.hex].v.map((v) => s.build[v]).filter((b) => b && b.o !== seat && total(s.hands[b.o]) > 0).map((b) => b.o))];
-        let from = -1;
-        if (victims.length) {
-          // bevorzugt den mit den meisten Siegpunkten
-          victims.sort((x, y) => IS.vp(s, y, false) - IS.vp(s, x, false));
-          from = victims[0];
-          const pool = [];
-          RES.forEach((r) => { for (let i = 0; i < s.hands[from][r]; i++) pool.push(r); });
-          const r = pool[Math.floor(rand(s) * pool.length)];
-          s.hands[from][r]--; h[r]++;
-        }
-        ev.push({ type: "robber", seat, hex: m.hex, from });
+        const victims = IS.victimsOf(s, m.hex, seat);
+        ev.push({ type: "robber", seat, hex: m.hex, from: -1, choose: victims.length > 1 });
+        if (victims.length > 1) { s.victims = victims; s.phase = "steal"; return ev; }
+        if (victims.length === 1) return IS.steal(s, victims[0], ev);
         s.phase = s.dice ? "main" : "roll";
         return ev;
       }
@@ -299,8 +343,17 @@
       ev.push({ type: "end", seat });
       s.turn = (seat + 1) % s.players;
       s.turnNo++;
-      s.phase = "roll"; s.dice = null; s.played = false;
+      s.phase = "roll"; s.dice = null; s.played = false; s.offers = 0;
       if (s.turnNo > 600) { s.win = { seat: IS.leader(s) }; ev.push({ type: "win", seat: s.win.seat, vp: IS.vp(s, s.win.seat) }); }
+      return ev;
+    },
+    steal(s, from, ev) {
+      const seat = s.turn, pool = [];
+      RES.forEach((r) => { for (let i = 0; i < s.hands[from][r]; i++) pool.push(r); });
+      if (pool.length) { const r = pool[Math.floor(rand(s) * pool.length)]; s.hands[from][r]--; s.hands[seat][r]++; }
+      ev.push({ type: "steal", seat, from });
+      s.victims = null;
+      s.phase = s.dice ? "main" : "roll";
       return ev;
     },
     leader(s) { let b = 0; for (let i = 1; i < s.players; i++) if (IS.vp(s, i) > IS.vp(s, b)) b = i; return b; },
@@ -368,7 +421,33 @@
       return val;
     },
     ai(s, level) {
-      const seat = s.turn, legal = IS.legal(s), h = s.hands[seat];
+      const seat = IS.current(s), legal = IS.legal(s), h = s.hands[seat];
+      const goal = s.phase === "setup" ? "settlement" : IS.goal(s, seat);
+      const need = RES.filter((r) => (COST[goal][r] || 0) > h[r]);
+      if (s.phase === "discard") {
+        // Behalten, was fürs Ziel gebraucht wird
+        const hh = Object.assign({}, h), out = emptyHand();
+        let k = s.discardNeed[seat];
+        while (k--) {
+          const r = RES.filter((x) => hh[x] > 0).sort((x, y) => (hh[y] - (COST[goal][y] || 0) * (level === "easy" ? 0 : 1)) - (hh[x] - (COST[goal][x] || 0) * (level === "easy" ? 0 : 1)))[0];
+          hh[r]--; out[r]++;
+        }
+        return { type: "discard", cards: out };
+      }
+      if (s.phase === "steal") {
+        const leader = IS.leader(s);
+        return legal.slice().sort((a, b) => (b.from === leader) - (a.from === leader) || total(s.hands[b.from]) - total(s.hands[a.from]))[0];
+      }
+      if (s.phase === "offer") {
+        const o = s.offer;
+        if (!legal.some((m) => m.type === "accept")) return { type: "decline" };
+        if (IS.vp(s, o.from, false) >= s.target - 2 && level !== "easy") return { type: "decline" };
+        if (level === "easy") return Math.random() < 0.35 ? { type: "accept" } : { type: "decline" };
+        const myGoal = IS.goal(s, seat);
+        const gain = RES.reduce((a, r) => a + (o.give[r] ? (Math.max(0, (COST[myGoal][r] || 0) - h[r]) > 0 ? 2 : 0.6) * o.give[r] : 0), 0);
+        const loss = RES.reduce((a, r) => a + (o.get[r] ? (h[r] - o.get[r] < (COST[myGoal][r] || 0) ? 2 : 0.5) * o.get[r] : 0), 0);
+        return gain > loss ? { type: "accept" } : { type: "decline" };
+      }
       const pickBest = (ms, f) => { let b = ms[0], bv = -Infinity; for (const m of ms) { const v = f(m) + Math.random() * (level === "easy" ? 4 : 0.3); if (v > bv) { bv = v; b = m; } } return b; };
       if (s.phase === "setup") {
         if (s.step === "settlement") return pickBest(legal, (m) => IS.spotValue(s, m.v, seat));
@@ -412,12 +491,19 @@
         if (IS.roadValue(s, best.e, seat) > 0 || level === "easy") return best;
       }
       if (has("buy").length && (level === "hard" || !spots.length || Math.random() < 0.5)) return { type: "buy" };
+      // Handel mit Mitspielern: Überschuss gegen Fehlendes
+      if (level !== "easy" && (s.offers || 0) < 2 && need.length && need.length <= 2) {
+        const surplus = RES.filter((r) => h[r] - (COST[goal][r] || 0) >= 1).sort((a, b) => h[b] - h[a]);
+        if (surplus.length) {
+          const give = emptyHand(); give[surplus[0]] = level === "hard" && h[surplus[0]] - (COST[goal][surplus[0]] || 0) >= 2 && Math.random() < 0.4 ? 2 : 1;
+          const get = emptyHand(); get[need[0]] = 1;
+          return { type: "offer", give, get };
+        }
+      }
       // Tauschen in Richtung des nächsten Ziels
       if (level !== "easy") {
         const trades = has("trade");
         if (trades.length) {
-          const goal = IS.goal(s, seat);
-          const need = RES.filter((r) => (COST[goal][r] || 0) > h[r]);
           const t = trades.filter((m) => need.includes(m.get) && h[m.give] - IS.rate(s, seat, m.give) >= (COST[goal][m.give] || 0));
           if (t.length) return pickBest(t, (m) => -IS.rate(s, seat, m.give));
         }

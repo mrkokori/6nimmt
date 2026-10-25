@@ -20,8 +20,11 @@
   const house = (x, y, c, t) => (t === 2
     ? `<path d="M${x - 0.32} ${y + 0.22}V${y - 0.08}L${x - 0.16} ${y - 0.24}L${x} ${y - 0.08}H${x + 0.32}V${y + 0.22}Z" fill="${c}"/>`
     : `<path d="M${x - 0.2} ${y + 0.18}V${y - 0.06}L${x} ${y - 0.24}L${x + 0.2} ${y - 0.06}V${y + 0.18}Z" fill="${c}"/>`);
-  let selMode = null; // "road" | "settle" | "city" | "trade" | "plenty" | "monopoly"
+  let selMode = null; // "road" | "settle" | "city" | "trade" | "plenty" | "monopoly" | "offer"
   let selRes = [];
+  let bundle = { give: {}, get: {} }, drop = {};
+  const bsum = (b) => R.reduce((a, r) => a + (b[r] || 0), 0);
+  const bText = (b) => R.filter((r) => b[r]).map((r) => ICON[r].repeat(b[r])).join("") || "–";
 
   function boardSVG(st, me, active) {
     const legal = active ? IS.legal(st) : [];
@@ -70,16 +73,35 @@
     if (active && st.phase === "roll") bar = `<button type="button" class="big-btn primary act is-roll" data-kind="roll">Würfeln</button>`;
     else if (active && st.phase === "main") {
       const b = (t, label, cost, enabled) => `<button type="button" class="is-btn ${selMode === t ? "on" : ""} ${enabled ? "act" : ""}" data-kind="mode" data-mode="${t}" ${enabled ? "" : "disabled"}><b>${label}</b><small>${cost}</small></button>`;
-      bar = `<div class="is-bar">${b("road", "Straße", costHTML(IS.COST.road), has("road"))}${b("settle", "Siedlung", costHTML(IS.COST.settlement), has("settle"))}${b("city", "Stadt", costHTML(IS.COST.city), has("city"))}
+      bar = `<div class="is-bar four">${b("road", "Straße", costHTML(IS.COST.road), has("road"))}${b("settle", "Siedlung", costHTML(IS.COST.settlement), has("settle"))}${b("city", "Stadt", costHTML(IS.COST.city), has("city"))}
         <button type="button" class="is-btn ${has("buy") ? "act" : ""}" data-kind="buy" ${has("buy") ? "" : "disabled"}><b>Karte</b><small>${costHTML(IS.COST.dev)}</small></button>
-        ${b("trade", "Tausch", "Bank/Hafen", has("trade"))}
+        ${b("trade", "Bank", "4:1 / Hafen", has("trade"))}
+        ${b("offer", "Handel", "mit Spielern", (st.offers || 0) < 3 && bsum(h) > 0)}
         <button type="button" class="is-btn end act" data-kind="end"><b>Fertig</b><small>Zug beenden</small></button></div>`;
     } else if (active && st.phase === "roads") bar = `<p class="hint">Baue bis zu 2 Straßen kostenlos.</p><button type="button" class="small-btn act" data-kind="end">Fertig</button>`;
     let pick = "";
+    if (active && selMode === "offer" && st.phase === "main") {
+      const row = (side, label) => `<div class="is-orow"><span>${label}</span>${R.map((r) => `<span class="is-ocell"><span>${ICON[r]}</span><button type="button" class="act is-pm" data-kind="ob" data-side="${side}" data-res="${r}" data-d="-1" ${(bundle[side][r] || 0) > 0 ? "" : "disabled"}>−</button><b>${bundle[side][r] || 0}</b><button type="button" class="act is-pm" data-kind="ob" data-side="${side}" data-res="${r}" data-d="1" ${side === "give" ? ((bundle.give[r] || 0) < h[r] ? "" : "disabled") : ""}>+</button></span>`).join("")}</div>`;
+      const ok = bsum(bundle.give) > 0 && bsum(bundle.get) > 0 && R.every((r) => !(bundle.give[r] && bundle.get[r]));
+      pick = `<div class="is-pick is-trade">${row("give", "Du gibst")}${row("get", "Du willst")}<div><button type="button" class="small-btn act primary" data-kind="offerok" ${ok ? "" : "disabled"}>Anbieten</button><button type="button" class="small-btn act" data-kind="cancel">Abbrechen</button></div></div>`;
+    }
     if (active && (selMode === "trade" || selMode === "plenty" || selMode === "monopoly")) {
       const title = selMode === "trade" ? (selRes.length ? `${IS.rate(st, me, selRes[0])}× ${RN[selRes[0]]} gegen …` : "Was gibst du her?") : selMode === "plenty" ? `Zwei Rohstoffe aussuchen (${selRes.length}/2)` : "Welchen Rohstoff bekommst du von allen?";
       const opts = R.filter((r) => selMode !== "trade" || (selRes.length ? r !== selRes[0] : h[r] >= IS.rate(st, me, r)));
       pick = `<div class="is-pick"><span>${title}</span><div>${opts.map((r) => `<button type="button" class="act is-res" data-kind="res" data-res="${r}">${ICON[r]}<small>${RN[r]}</small></button>`).join("")}</div><button type="button" class="small-btn act" data-kind="cancel">Abbrechen</button></div>`;
+    }
+    // Abwerfen bei der 7
+    if (active && st.phase === "discard") {
+      const need = st.discardNeed[me], have = bsum(drop);
+      const rows = R.map((r) => `<div class="is-step"><span>${ICON[r]} ${h[r]}</span><button type="button" class="act is-pm" data-kind="drop" data-res="${r}" data-d="-1" ${drop[r] ? "" : "disabled"}>−</button><b>${drop[r] || 0}</b><button type="button" class="act is-pm" data-kind="drop" data-res="${r}" data-d="1" ${(drop[r] || 0) < h[r] && have < need ? "" : "disabled"}>+</button></div>`).join("");
+      return `<div class="is-pick"><span>Die 7! Gib <b>${need}</b> Karten ab (${have}/${need}).</span>${rows}<button type="button" class="big-btn primary act" data-kind="dropok" ${have === need ? "" : "disabled"}>Abgeben</button></div>`;
+    }
+    if (active && st.phase === "steal") return `<div class="is-pick"><span>Von wem klaust du eine Karte?</span><div>${st.victims.map((v) => `<button type="button" class="small-btn act" data-kind="steal" data-from="${v}">${esc(K.bs.seats[v].name)} (${st.hands[v].hidden !== undefined ? st.hands[v].hidden : bsum(st.hands[v])})</button>`).join("")}</div></div>`;
+    if (st.phase === "offer" && st.offer) {
+      const o = st.offer;
+      const asked = active && IS.current(st) === me;
+      const canPayIt = asked && R.every((r) => (h[r] || 0) >= (o.get[r] || 0));
+      return `<div class="is-pick is-offer"><span>${esc(K.bs.seats[o.from].name)} bietet <b>${bText(o.give)}</b> für <b>${bText(o.get)}</b></span>${asked ? `<div><button type="button" class="small-btn act primary" data-kind="accept" ${canPayIt ? "" : "disabled"}>Annehmen</button><button type="button" class="small-btn act" data-kind="decline">Ablehnen</button></div>` : `<span class="hint">wartet auf Antwort …</span>`}</div>`;
     }
     const dice = st.dice ? `<span class="is-dice"><span class="is-die">${dieFace(st.dice[0])}</span><span class="is-die">${dieFace(st.dice[1])}</span></span>` : "";
     return `<div class="is-hand">${cards}${dice}</div>${devHTML ? `<div class="is-devs">${devHTML}</div>` : ""}${pick}${bar}`;
@@ -110,11 +132,19 @@
       const me = meOf();
       const mine = active && IS.current(st) === me;
       if (!mine) { selMode = null; selRes = []; }
+      if (st.phase !== "discard") drop = {};
       root.innerHTML = `<div class="is-board">${boardSVG(st, me, mine)}</div><div class="is-panel">${panelHTML(st, me, mine)}</div>`;
     },
     click(h, st) {
       const k = h.dataset.kind;
-      const reset = () => { selMode = null; selRes = []; };
+      const reset = () => { selMode = null; selRes = []; bundle = { give: {}, get: {} }; };
+      if (k === "drop") { const r = h.dataset.res; drop[r] = Math.max(0, (drop[r] || 0) + Number(h.dataset.d)); return K.render(); }
+      if (k === "dropok") { const cards = Object.assign({}, drop); drop = {}; return K.act({ type: "discard", cards }); }
+      if (k === "steal") return K.act({ type: "steal", from: Number(h.dataset.from) });
+      if (k === "accept") return K.act({ type: "accept" });
+      if (k === "decline") return K.act({ type: "decline" });
+      if (k === "ob") { const side = h.dataset.side, r = h.dataset.res; bundle[side][r] = Math.max(0, (bundle[side][r] || 0) + Number(h.dataset.d)); return K.render(); }
+      if (k === "offerok") { const give = Object.assign({}, bundle.give), get = Object.assign({}, bundle.get); reset(); return K.act({ type: "offer", give, get }); }
       if (k === "roll") return K.act({ type: "roll" });
       if (k === "end") { reset(); return K.act({ type: "end" }); }
       if (k === "buy") { reset(); return K.act({ type: "buy" }); }
@@ -147,6 +177,10 @@
       if (st.phase === "setup") return st.step === "settlement" ? "Gründung: Setze eine Siedlung (gelbe Punkte)." : "Gründung: Setze eine Straße daneben.";
       if (st.phase === "roll") return "Würfeln – oder vorher einen Ritter ausspielen.";
       if (st.phase === "robber") return "Versetze den Räuber auf ein anderes Feld.";
+      if (st.phase === "discard") return "Wähle die Karten, die du abgibst.";
+      if (st.phase === "steal") return "Wähle, von wem du eine Karte klaust.";
+      if (st.phase === "offer") return "Ein Handelsangebot – annehmen oder ablehnen?";
+      if (selMode === "offer") return "Stell dein Angebot zusammen.";
       if (st.phase === "roads") return "Straßenbau: tippe auf eine Kante.";
       if (selMode === "road") return "Tippe auf eine markierte Kante.";
       if (selMode === "settle") return "Tippe auf einen markierten Bauplatz.";
@@ -200,22 +234,44 @@
           ev.gains.forEach((g) => { per[g.seat] = per[g.seat] || {}; per[g.seat][g.res] = (per[g.seat][g.res] || 0) + g.n; const hh = st.hands[g.seat]; if (hh.hidden !== undefined) hh.hidden += g.n; else hh[g.res] += g.n; });
           K.setCaption(Object.entries(per).map(([seat, rs]) => `${esc(K.bs.seats[seat].name)}: ${Object.entries(rs).map(([r, n]) => ICON[r].repeat(n)).join("")}`).join(" · "));
         } else if (ev.sum !== 7) K.setCaption(`Eine ${ev.sum} – niemand bekommt etwas.`);
-        if (ev.lost && ev.lost.some(Boolean)) {
-          ev.lost.forEach((l, i) => { if (!l) return; const hh = st.hands[i]; const n = R.reduce((a, r) => a + l[r], 0); if (hh.hidden !== undefined) hh.hidden -= n; else R.forEach((r) => (hh[r] -= l[r])); });
-          K.setCaption(`Die 7! ${ev.lost.map((l, i) => (l ? `${esc(K.bs.seats[i].name)} gibt ${R.reduce((a, r) => a + l[r], 0)} ab` : "")).filter(Boolean).join(", ")}.`);
-        }
+        if (ev.discard && ev.discard.some(Boolean)) K.setCaption(`Die 7! ${ev.discard.map((n, i) => (n ? `${esc(K.bs.seats[i].name)} muss ${n} abgeben` : "")).filter(Boolean).join(", ")}.`);
         st.phase = ev.sum === 7 ? "robber" : "main";
         BoardUI.spec("siedler").renderCustom(st, false);
         K.renderPlayers();
         await K.wait(900);
       },
+      async discard(ev) {
+        const hh = K.disp.hands[ev.seat];
+        if (hh.hidden !== undefined) hh.hidden -= ev.n; else R.forEach((r) => (hh[r] -= ev.cards[r] || 0));
+        K.setCaption(`${K.whoName(ev.seat, "gibst", "gibt")} ${bText(ev.cards)} ab.`);
+        K.renderPlayers();
+        await K.wait(700);
+      },
+      async steal(ev) { K.setCaption(`${K.whoName(ev.seat, "klaust", "klaut")} ${ev.from === K.meSeat() ? "dir" : esc(K.bs.seats[ev.from].name)} eine Karte.`); await K.wait(800); },
+      async offer(ev) {
+        K.disp.offer = { from: ev.seat, give: ev.give, get: ev.get };
+        K.setCaption(ev.asked.length ? `${K.whoName(ev.seat, "bietest", "bietet")} ${bText(ev.give)} für ${bText(ev.get)}.` : `${K.whoName(ev.seat, "bietest", "bietet")} ${bText(ev.give)} für ${bText(ev.get)} – aber niemand kann zahlen.`);
+        await K.wait(900);
+      },
+      async accept(ev) {
+        const st = K.disp;
+        const move = (seat, b, sign) => { const hh = st.hands[seat]; if (hh.hidden !== undefined) hh.hidden += sign * bsum(b); else R.forEach((r) => (hh[r] += sign * (b[r] || 0))); };
+        move(ev.from, ev.give, -1); move(ev.seat, ev.give, 1); move(ev.seat, ev.get, -1); move(ev.from, ev.get, 1);
+        st.offer = null;
+        K.setCaption(`${K.whoName(ev.seat, "nimmst", "nimmt")} an: ${bText(ev.give)} ⇄ ${bText(ev.get)}.`);
+        K.renderPlayers();
+        await anim(document.querySelector(`#bplayers [data-seat="${ev.seat}"]`), [{ transform: "scale(1.1)" }, { transform: "none" }], 500);
+        await K.wait(500);
+      },
+      async decline(ev) { K.setCaption(`${K.whoName(ev.seat, "lehnst", "lehnt")} ab.`); await K.wait(450); },
+      async nobody(ev) { K.disp.offer = null; K.setCaption("Niemand nimmt das Angebot an."); await K.wait(700); },
       async robber(ev) {
         const st = K.disp;
         const from = IS.HEX[st.robber], to = IS.HEX[ev.hex];
         const el = q(".is-robber");
         if (el && motionOn()) await anim(el, [{ transform: "translate(0,0)" }, { transform: `translate(${(to.x - from.x) / 2}px, ${(to.y - from.y) / 2 - 1}px)`, offset: 0.5 }, { transform: `translate(${to.x - from.x}px, ${to.y - from.y}px)` }], 600, { fill: "forwards" });
         st.robber = ev.hex;
-        K.setCaption(ev.from >= 0 ? `Der Räuber zieht um – ${K.whoName(ev.seat, "klaust", "klaut")} ${ev.from === K.meSeat() ? "dir" : esc(K.bs.seats[ev.from].name)} eine Karte.` : "Der Räuber zieht um.");
+        K.setCaption("Der Räuber zieht um.");
         BoardUI.spec("siedler").renderCustom(st, false);
         await K.wait(800);
       },

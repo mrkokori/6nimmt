@@ -54,6 +54,50 @@ for (let i = 0; i < 10; i++) {
   if (r.winners[0] === hs) hw++;
 }
 ok(hw >= 7, `schwer schlägt leicht (${hw}/10)`);
+// Abwerfen bei der 7 selbst wählen
+const d = G.create({ players: 3, seed: 21 });
+while (d.phase === "setup") G.apply(d, G.ai(d, "normal"));
+d.hands[1] = { holz: 4, lehm: 4, wolle: 0, getreide: 0, erz: 1 };
+d.phase = "roll";
+// Würfel auf 7 zwingen
+let tries = 0;
+while (tries++ < 200) {
+  const c = JSON.parse(JSON.stringify(d));
+  G.apply(c, { type: "roll" });
+  if (c.dice[0] + c.dice[1] === 7) { Object.assign(d, c); break; }
+  d.rng = (d.rng + 7) >>> 0;
+}
+ok(d.phase === "discard" && G.current(d) === 1 && d.discardNeed[1] === 4, "7: Spieler mit 9 Karten muss 4 abgeben");
+ok(!G.apply(d, { type: "discard", cards: { holz: 3 } }), "falsche Anzahl abgelehnt");
+G.apply(d, { type: "discard", cards: { holz: 2, lehm: 1, erz: 1 } });
+ok(d.hands[1].holz === 2 && d.hands[1].erz === 0 && (d.phase === "robber" || d.phase === "discard"), "selbst gewählte Karten abgegeben");
+// Handel zwischen Spielern
+const t2 = G.create({ players: 3, seed: 4 });
+while (t2.phase === "setup") G.apply(t2, G.ai(t2, "normal"));
+t2.phase = "main"; t2.turn = 0;
+t2.hands[0] = { holz: 2, lehm: 0, wolle: 0, getreide: 0, erz: 0 };
+t2.hands[1] = { holz: 0, lehm: 0, wolle: 0, getreide: 0, erz: 0 };
+t2.hands[2] = { holz: 0, lehm: 0, wolle: 0, getreide: 0, erz: 2 };
+ok(!G.apply(t2, { type: "offer", give: { holz: 3 }, get: { erz: 1 } }), "nicht mehr anbieten als man hat");
+const ev2 = G.apply(t2, { type: "offer", give: { holz: 1 }, get: { erz: 1 } });
+ok(t2.phase === "offer" && G.current(t2) === 2 && ev2[0].asked.join() === "2", "nur wer zahlen kann, wird gefragt");
+G.apply(t2, { type: "accept" });
+ok(t2.hands[0].erz === 1 && t2.hands[0].holz === 1 && t2.hands[2].holz === 1 && t2.hands[2].erz === 1 && t2.phase === "main" && G.current(t2) === 0, "Handel ausgeführt, zurück zum Anbieter");
+// Opfer wählen
+const r3 = G.create({ players: 3, seed: 6 });
+while (r3.phase === "setup") G.apply(r3, G.ai(r3, "normal"));
+r3.phase = "robber"; r3.turn = 0; r3.dice = [3, 4];
+const hexWithTwo = G.HEX.findIndex((hx, i) => i !== r3.robber && new Set(hx.v.map((v) => r3.build[v]).filter((b) => b && b.o !== 0).map((b) => b.o)).size >= 2);
+if (hexWithTwo >= 0) {
+  r3.hands[1].holz = 1; r3.hands[2].holz = 1;
+  G.apply(r3, { type: "robber", hex: hexWithTwo });
+  ok(r3.phase === "steal" && G.legal(r3).length >= 2, "mehrere Nachbarn: Opfer wählen");
+  const victim = G.legal(r3)[0].from;
+  const sum = (h) => Object.values(h).reduce((a, b) => a + b, 0);
+  const before = sum(r3.hands[victim]), mine = sum(r3.hands[0]);
+  G.apply(r3, { type: "steal", from: victim });
+  ok(r3.phase === "main" && sum(r3.hands[victim]) === before - 1 && sum(r3.hands[0]) === mine + 1, "eine Karte gestohlen");
+} else ok(true, "(kein Feld mit zwei Nachbarn in diesem Aufbau)");
 const v1 = G.view(s, 0);
 ok(v1.hands[1].hidden !== undefined && v1.devs[1].every((d) => d.t === "?"), "fremde Karten verdeckt");
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);
