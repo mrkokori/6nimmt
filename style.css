@@ -184,11 +184,11 @@ input[type="text"] {
   transition: background .2s, border-color .2s;
 }
 .row.target { border-color: var(--hay); }
-.row.danger { border-color: var(--barn); }
+.row.danger { border-color: var(--barn); background: rgba(212, 81, 58, .22); }
 .row.choosable { border-color: var(--hay); cursor: pointer; animation: choose 1.4s ease-in-out infinite; }
 .row.choosable:focus-visible { outline-offset: 1px; }
 @keyframes choose { 50% { background: var(--table-3); } }
-.row.taken { animation: taken .7s ease-out; }
+.row.taken { animation: taken 1.2s ease-out; }
 @keyframes taken { 0% { background: var(--barn); } 100% { background: var(--table-2); } }
 .slot { aspect-ratio: 5 / 7; border-radius: var(--radius-card); border: 1.5px dashed rgba(163, 173, 198, .22); }
 .slot.six { border-color: var(--barn); display: grid; place-items: center; color: var(--barn); font: 700 15px var(--num); opacity: .8; }
@@ -221,7 +221,7 @@ input[type="text"] {
 .trick-item .card { width: 100%; }
 .trick-item .who { font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trick-item.done { opacity: .28; }
-.trick-item.current .card { box-shadow: 0 0 0 2px var(--hay), 0 6px 12px rgba(0,0,0,.4); transform: translateY(-3px); }
+.trick-item.current .card { box-shadow: 0 0 0 3px var(--hay), 0 8px 14px rgba(0,0,0,.45); transform: translateY(-4px) scale(1.06); transition: transform .25s; }
 
 .status:empty { display: none; }
 .status { margin: 0; font-weight: 600; text-align: center; }

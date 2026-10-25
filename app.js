@@ -5,12 +5,12 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.3";
+const APP_VERSION = "2026.10.25.4";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
 const LEVEL_LABEL = { easy: "leicht", normal: "normal", hard: "schwer" };
-const SPEED = { slow: 1.5, normal: 1, fast: 0.45 };
+const SPEED = { slow: 1.6, normal: 1, fast: 0.5 };
 
 // ---------- Speicher ----------
 const store = {
@@ -179,6 +179,7 @@ function renderGame() {
     if (myRowChoice) cls += " choosable";
     else if (pickedTarget !== null && pickedTarget === r) cls += row.length >= E.MAX_ROW ? " danger" : " target";
     if (ui.highlight && ui.highlight.row === r && ui.highlight.took) cls += " taken";
+    if (ui.preRow && ui.preRow.row === r) cls += ui.preRow.took ? " danger" : " target";
     let cells = "";
     for (let k = 0; k < 6; k++) {
       if (k < row.length) {
@@ -212,7 +213,7 @@ function renderGame() {
         ? `${v.players[ui.mySeat].name}, wähle eine Karte.` : (waiting === v.players.length ? "Wähle eine Karte." : "Die anderen warten auf dich.");
     } else if (ui.mySeat >= 0 && v.mySelection !== null) st.textContent = "Warte auf die anderen …";
     else st.textContent = "";
-  } else st.textContent = ui.animating ? "" : "";
+  } else st.textContent = ui.animating ? (ui.caption || "") : "";
 
   // Hand
   const hand = $("hand");
@@ -329,7 +330,7 @@ const fx = {
         { transform: "translate(0,0) scale(1) rotate(0)", opacity: 1 },
         { transform: `translate(${dx * 0.15}px, ${dy * 0.15 - 14}px) scale(1.06) rotate(${i % 2 ? 6 : -6}deg)`, opacity: 1, offset: 0.25 },
         { transform: `translate(${dx}px, ${dy}px) scale(.25) rotate(${i % 2 ? 20 : -20}deg)`, opacity: 0.2 }
-      ], { duration: dur(ms), delay: dur(i * 70), easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" });
+      ], { duration: dur(ms), delay: dur(i * 130), easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" });
     });
     try { await Promise.all(anims.map((a) => a.finished)); } catch (e) {}
     ghosts.forEach(({ g }) => g.remove());
@@ -346,13 +347,13 @@ const fx = {
         const t = card.getBoundingClientRect();
         const dx = fromHand.r.left - t.left, dy = fromHand.r.top - t.top, s = fromHand.r.width / t.width;
         card.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transform: "none" }],
-          { duration: dur(420), easing: "cubic-bezier(.3,.7,.3,1)" });
+          { duration: dur(650), easing: "cubic-bezier(.3,.7,.3,1)" });
         return;
       }
       card.animate([
         { transform: "perspective(400px) rotateY(90deg)", filter: "brightness(.4)" },
         { transform: "perspective(400px) rotateY(0)", filter: "none" }
-      ], { duration: dur(300), delay: dur(120 + i * 110), easing: "ease-out", fill: "backwards" });
+      ], { duration: dur(420), delay: dur(250 + i * 230), easing: "ease-out", fill: "backwards" });
     });
   },
   // Neue Hand austeilen
@@ -399,14 +400,27 @@ async function playEvents(events, finalView) {
       const fromHand = handCard && motionOn() ? { card: Number(handCard.dataset.card), r: handCard.getBoundingClientRect() } : null;
       ui.view = v; ui.trickPos = 0; ui.highlight = null; ui.picked = null;
       renderGame();
+      ui.caption = "Alle Karten werden aufgedeckt …";
+      renderGame();
       fx.reveal(fromHand);
-      await sleep(600 + v.revealed.length * 110);
+      await sleep(900 + v.revealed.length * 230);
     } else if (ev.type === "place") {
+      // 1. Ankündigen: welche Karte kommt jetzt wohin
+      const who = ev.seat === ui.mySeat && session.mode !== "hotseat" ? "Du" : v.players[ev.seat].name;
+      const du = who === "Du";
+      ui.trickPos = v.revealed.findIndex((p) => p.card === ev.card);
+      ui.preRow = { row: ev.row, took: !!ev.took };
+      ui.caption = ev.took
+        ? (ev.chosen ? `${who} ${du ? "nimmst" : "nimmt"} Reihe ${ev.row + 1} (zu niedrig mit der ${ev.card})` : `Die ${ev.card} wäre die 6. Karte – ${who} ${du ? "nimmst" : "nimmt"} die Reihe!`)
+        : `${who} ${du ? "legst" : "legt"} die ${ev.card} an Reihe ${ev.row + 1}`;
+      ui.highlight = null;
+      v.phase = "resolving"; v.pending = null;
+      renderGame();
+      await sleep(ev.took ? 900 : 550);
+      ui.preRow = null;
       v.rows = ev.rows;
       v.players.forEach((p, i) => { p.roundPenalty = ev.roundPenalty[i]; });
-      ui.trickPos = v.revealed.findIndex((p) => p.card === ev.card);
       ui.highlight = { row: ev.row, card: ev.card, took: !!ev.took };
-      v.phase = "resolving"; v.pending = null;
       // Vor dem Neuzeichnen: Quelle (aufgedeckte Karte) und genommene Reihe merken
       const src = document.querySelector(`#trick .trick-item[data-card="${ev.card}"] .card`);
       const srcGhost = src && motionOn() ? fx.ghost(src) : null;
@@ -422,19 +436,22 @@ async function playEvents(events, finalView) {
         toast(`${who} ${ev.took.length} Karte${ev.took.length > 1 ? "n" : ""}: +${bulls}`);
         const chip = document.querySelector(`.player[data-seat="${ev.seat}"]`);
         if (chip) chip.classList.add("flash");
-        if (motionOn()) await fx.collect(takenGhosts, chip, 650);
+        if (motionOn()) await fx.collect(takenGhosts, chip, 1000);
       }
       if (srcGhost && target) {
         const trickCard = document.querySelector(`#trick .trick-item[data-card="${ev.card}"] .card`);
         if (trickCard) trickCard.classList.add("invisible");
-        await fx.flyGhost(srcGhost.g, srcGhost.r, target, 460);
+        await fx.flyGhost(srcGhost.g, srcGhost.r, target, 850);
         if (trickCard) trickCard.classList.remove("invisible");
-        await sleep(ev.took ? 500 : 180);
-      } else await sleep(ev.took ? 1500 : 650);
+        await sleep(ev.took ? 700 : 450);
+      } else await sleep(ev.took ? 1800 : 900);
       ui.trickPos += 1;
     } else if (ev.type === "needRow") {
       ui.trickPos = v.revealed.findIndex((p) => p.card === ev.card);
-      await sleep(250);
+      const who = ev.seat === ui.mySeat && session.mode !== "hotseat" ? "Deine" : `${v.players[ev.seat].name}s`;
+      ui.caption = `${who} ${ev.card} ist niedriger als alle Reihen …`;
+      renderGame();
+      await sleep(1100);
     } else if (ev.type === "trickEnd" || ev.type === "roundEnd") {
       ui.trickPos = v.revealed.length;
       renderGame();
@@ -442,6 +459,8 @@ async function playEvents(events, finalView) {
     }
   }
   ui.animating = false;
+  ui.caption = "";
+  ui.preRow = null;
   ui.highlight = null;
   ui.trickPos = finalView.phase === "chooseRow" ? ui.trickPos : -1;
   ui.view = finalView;
@@ -993,10 +1012,21 @@ function clientMessage(msg) {
       if (view.phase === "select" && view.round !== session.recordedRound) session.recordedRound = null;
     });
   } else if (msg.t === "error") {
-    onlineError(String(msg.text || "Fehler"));
-    if (!$("screen-game").classList.contains("hidden")) modal("Verbindung", `<p class="modal-body-text">${esc(msg.text)}</p>`, [{ label: "Zum Menü", primary: true, run: leaveGame }]);
-    else if (!$("screen-lobby").classList.contains("hidden")) show("setup-online");
+    // Host hat abgewiesen (voll, läuft schon, entfernt): Verbindung beenden,
+    // damit die App nicht automatisch wieder beitritt
+    const text = String(msg.text || "Fehler");
+    try { session.net.close(); } catch (e) {}
+    session = null; lobby = null;
+    if (!$("screen-game").classList.contains("hidden")) {
+      modal("Verbindung", `<p class="modal-body-text">${esc(text)}</p>`, [{ label: "Zum Menü", primary: true, run: leaveGame }]);
+      return;
+    }
+    if ($("screen-setup-online").classList.contains("hidden")) show("setup-online");
+    $("online-join").disabled = false;
+    $("online-join").textContent = "Beitreten";
+    onlineError(text);
   } else if (msg.t === "closed") {
+    try { session.net.close(); } catch (e) {}
     modal("Raum geschlossen", '<p class="modal-body-text">Der Host hat den Raum geschlossen.</p>', [{ label: "Zum Menü", primary: true, run: leaveGame }]);
   }
 }

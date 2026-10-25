@@ -143,3 +143,23 @@ test("Online: Beitreten klappt, obwohl der Host gerade kurz weg war", async ({ b
   await expect(host.locator("#lobby-code")).toHaveText(code);
   expect(guest.errors).toEqual([]);
 });
+
+test("Online: aus der Lobby entfernter Gast bekommt Hinweis und tritt nicht wieder bei", async ({ browser }) => {
+  const host = await (await browser.newContext()).newPage();
+  const guest = await (await browser.newContext()).newPage();
+  await setup(host, "Dominic");
+  await setup(guest, "Sonja");
+  await host.click("text=Online mit Freunden");
+  await host.click("#online-host");
+  await expect(host.locator("#screen-lobby")).toBeVisible();
+  const code = (await host.textContent("#lobby-code")).trim();
+  await guest.click("text=Online mit Freunden");
+  await guest.fill("#online-code", code);
+  await guest.click("#online-join");
+  await expect(host.locator("#lobby-list li")).toHaveCount(2);
+  await host.click('#lobby-list [data-remove="1"]');
+  await expect(guest.locator("#online-error")).toContainText("entfernt");
+  await host.waitForTimeout(6000);
+  await expect(host.locator("#lobby-list li")).toHaveCount(1);
+  expect(host.errors.concat(guest.errors)).toEqual([]);
+});

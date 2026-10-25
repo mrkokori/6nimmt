@@ -3,7 +3,7 @@
 // oder zu langsamem Netz die Version aus dem Cache. Nach dem ersten Öffnen
 // funktioniert die App damit auch ohne Empfang unterwegs.
 // Bei jeder Veröffentlichung hier UND in app.js (APP_VERSION) erhöhen.
-const VERSION = "2026.10.25.3";
+const VERSION = "2026.10.25.4";
 const CACHE_NAME = "sechs-nimmt-" + VERSION;
 const NETWORK_TIMEOUT_MS = 3000;
 const ASSETS = [
