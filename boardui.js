@@ -324,6 +324,7 @@ const BoardUI = (function () {
     render();
     let title;
     if (res.draw) title = "Unentschieden";
+    else if (!res.winners.length) title = "Leider verloren";
     else {
       const w = res.winners[0];
       title = w === meSeat() ? "Du gewinnst!" : bs.seats[w].name + " gewinnt";
