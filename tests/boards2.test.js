@@ -66,7 +66,12 @@ section("Gomoku");
   const u = G.create();
   [112, 0, 113, 1, 114, 2, 115].forEach((at) => G.apply(u, { at }));
   ok([111, 116].includes(G.ai(u, "normal").at), "KI blockt drohende Fünf");
-  ok(duel(G, () => G.create(), "hard", "easy", 6) >= 5, "schwer schlägt leicht");
+  ok(duel(G, () => G.create(), "hard", "easy", 8) >= 6, "schwer schlägt leicht");
+  ok(duel(G, () => G.create(), "hard", "normal", 10) >= 6, "schwer schlägt normal");
+  const v = G.create();
+  // Lückenvier X X _ X X erkennen
+  [110, 0, 111, 1, 113, 2, 114, 3].forEach((at) => G.apply(v, { at }));
+  ok(G.ai(v, "hard").at === 112, "schwer schließt Lückenvier");
 }
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);
 if (failed) process.exit(1);

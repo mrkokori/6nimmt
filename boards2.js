@@ -266,6 +266,7 @@
       ai(s, level) {
         const seat = s.turn, opp = 1 - seat;
         const cands = candidates(s.grid);
+        if (level === "hard") return { at: game.hardMove(s.grid, seat, cands) };
         const noise = level === "easy" ? 3000 : level === "normal" ? 60 : 0;
         const defense = level === "hard" ? 1.1 : 0.9;
         let best = null, bestV = -Infinity;
@@ -279,6 +280,61 @@
         }
         return { at: best };
       }
+    };
+    // Schwer: Negamax über 5er-Fenster (erkennt auch Lückenmuster wie X X _ X X)
+    const WINDOWS = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) for (const [dr, dc] of DIRS) {
+      const er = r + dr * 4, ec = c + dc * 4;
+      if (!inside(er, ec)) continue;
+      WINDOWS.push([0, 1, 2, 3, 4].map((k) => (r + dr * k) * N + (c + dc * k)));
+    }
+    const W = [0, 1, 12, 150, 4000, 1e7];
+    function evalBoard(grid, seat) {
+      let v = 0;
+      for (const w of WINDOWS) {
+        let a = 0, b = 0;
+        for (const i of w) { const x = grid[i]; if (x === seat) a++; else if (x !== -1) b++; }
+        if (a && b) continue;
+        if (a) v += W[a]; else if (b) v -= W[b] * 1.2;
+      }
+      return v;
+    }
+    function ordered(grid, who, limit) {
+      const c = candidates(grid).map((at) => ({ at, v: patternScore(grid, at, who) + patternScore(grid, at, 1 - who) * 0.9 }));
+      c.sort((x, y) => y.v - x.v);
+      return c.slice(0, limit);
+    }
+    function negamax(grid, who, depth, alpha, beta, deadline) {
+      if (depth === 0 || Date.now() > deadline) return evalBoard(grid, who);
+      const moves = ordered(grid, who, depth >= 3 ? 9 : 7);
+      let best = -Infinity;
+      for (const { at } of moves) {
+        grid[at] = who;
+        let v;
+        if (lineAt(grid, at, who)) v = 1e9 + depth;
+        else v = -negamax(grid, 1 - who, depth - 1, -beta, -alpha, deadline);
+        grid[at] = -1;
+        if (v > best) best = v;
+        if (v > alpha) alpha = v;
+        if (alpha >= beta) break;
+      }
+      return best;
+    }
+    game.hardMove = function (grid0, seat, cands) {
+      const grid = grid0.slice(), opp = 1 - seat;
+      if (grid.every((x) => x === -1)) return cands[0];
+      for (const at of cands) if (patternScore(grid, at, seat) >= 1e6) return at;
+      for (const at of cands) if (patternScore(grid, at, opp) >= 1e6) return at;
+      const deadline = Date.now() + 900;
+      const moves = ordered(grid, seat, 12);
+      let best = moves[0].at, bestV = -Infinity;
+      for (const { at } of moves) {
+        grid[at] = seat;
+        const v = -negamax(grid, opp, 3, -Infinity, -bestV, deadline) + Math.random();
+        grid[at] = -1;
+        if (v > bestV) { bestV = v; best = at; }
+      }
+      return best;
     };
     return game;
   })();
