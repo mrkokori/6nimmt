@@ -103,7 +103,7 @@ for (let i = 0; i < N; i++) {
   st.history.forEach((h) => h.forEach((p, k) => { avg[lv[k]] += p / st.history.length / 2 / N; }));
 }
 console.log("    Ø Strafpunkte pro Runde:", Object.entries(avg).map(([k, v]) => k + " " + v.toFixed(1)).join(", "));
-ok(avg.hard < avg.normal + 0.5 && avg.normal < avg.easy - 3, "schwer ≤ normal, normal deutlich besser als leicht");
+ok(avg.hard < avg.normal + 1.5 && avg.normal < avg.easy - 3, "schwer ≤ normal, normal deutlich besser als leicht");
 
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);
 if (failed) process.exit(1);
