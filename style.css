@@ -451,3 +451,68 @@ input[type="text"] {
 }
 
 #bsetup-forced button { font-size: 14px; padding: 0 8px; }
+
+/* =====================================================================
+   Reversi, Tic-Tac-Toe, Gomoku
+   ===================================================================== */
+:root { --felt: #2f7a4d; --felt-line: #1f5636; --x: var(--hay); --o: #ef7a62; }
+.seat-color.rv0 { background: #15171d; box-shadow: 0 0 0 1.5px var(--muted); }
+.seat-color.rv1 { background: #f4f1ea; }
+.seat-color.tt0 { background: var(--x); } .seat-color.tt1 { background: var(--o); }
+.marks { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.marks > div { position: absolute; }
+
+/* Kacheln */
+.art-reversi { display: grid; grid-template-columns: repeat(2, 24px); gap: 3px; background: var(--felt); padding: 5px; border-radius: 6px; width: max-content; height: auto; }
+.art-reversi .rd { width: 24px; height: 24px; border-radius: 50%; }
+.art-reversi .b { background: #15171d; } .art-reversi .w { background: #f4f1ea; }
+.art-ttt { display: grid; grid-template-columns: repeat(3, 20px); grid-auto-rows: 20px; gap: 2px; width: max-content; height: auto; }
+.art-ttt i { display: grid; place-items: center; background: var(--table-3); border-radius: 4px; font-size: 14px; font-weight: 800; color: var(--x); }
+.art-ttt i.o { color: var(--o); }
+.art-gomoku { gap: 2px; }
+.art-gomoku .gs { width: 20px; height: 20px; border-radius: 50%; }
+.art-gomoku .b { background: #15171d; box-shadow: 0 0 0 1.5px #555c70; } .art-gomoku .w { background: #f4f1ea; }
+
+/* Reversi */
+.g-reversi { border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 4px #183c28; }
+.g-reversi > svg .felt { fill: var(--felt); }
+.g-reversi > svg .lines path { stroke: var(--felt-line); stroke-width: 0.03; }
+.g-reversi > svg .dots circle { fill: var(--felt-line); }
+.rdisc { box-shadow: 0 3px 0 rgba(0, 0, 0, .45); backface-visibility: visible; }
+.rdisc.s0 { background: radial-gradient(circle at 35% 30%, #4a4f5e, #15171d 60%, #050608); }
+.rdisc.s1 { background: radial-gradient(circle at 35% 30%, #fff, #f1ede4 60%, #c9c3b4); }
+.hit.rtarget::after { inset: 38%; background: rgba(255, 255, 255, .55); box-shadow: none; }
+
+/* Tic-Tac-Toe */
+.g-ttt > svg path { fill: none; stroke-linecap: round; }
+.g-ttt > svg .thick { stroke: var(--muted); stroke-width: 0.06; }
+.g-ttt > svg .thin { stroke: rgba(163, 173, 198, .35); stroke-width: 0.025; }
+.g-ttt > svg[viewBox="0 0 9 9"] .thick { stroke-width: 0.08; }
+.tmark { border-radius: 0; display: grid; place-items: center; container-type: inline-size; }
+.tmark.x::before, .tmark.x::after { content: ""; position: absolute; width: 100%; height: 16%; border-radius: 99px; background: var(--x); }
+.tmark.x::before { transform: rotate(45deg); } .tmark.x::after { transform: rotate(-45deg); }
+.tmark.o { border-radius: 50%; }
+.tmark.o::before { content: ""; position: absolute; inset: 4%; border-radius: 50%; border: 13cqw solid var(--o); }
+.tmark.win { animation: winpulse 0.9s ease-in-out infinite; border-radius: 12px; }
+.hit.tcell { border-radius: 10px; }
+.hit.tcell:hover, .hit.tcell:focus-visible { background: rgba(255, 255, 255, .06); }
+.uactive { border-radius: 10px; box-shadow: inset 0 0 0 3px var(--hay); background: rgba(233, 185, 73, .07); animation: activepulse 1.6s ease-in-out infinite; }
+@keyframes activepulse { 50% { background: rgba(233, 185, 73, .14); } }
+.ubig { border-radius: 14px; background: rgba(29, 39, 64, .9); display: grid; place-items: center; container-type: inline-size; }
+.ubig.x::before, .ubig.x::after { content: ""; position: absolute; width: 78%; height: 11%; border-radius: 99px; background: var(--x); }
+.ubig.x::before { transform: rotate(45deg); } .ubig.x::after { transform: rotate(-45deg); }
+.ubig.o::before { content: ""; position: absolute; inset: 14%; border-radius: 50%; border: 9cqw solid var(--o); }
+.ubig.draw::before { content: "–"; color: var(--muted); font: 700 40cqw/1 var(--num); }
+.ubig.win { box-shadow: inset 0 0 0 3px var(--hay); }
+
+/* Gomoku */
+.g-gomoku { background: var(--wood); border-radius: 8px; }
+.g-gomoku > svg .lines { stroke: var(--wood-ink); stroke-width: 0.035; fill: none; }
+.g-gomoku > svg .stars circle { fill: var(--wood-ink); }
+.gstone { box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+.gstone.s0 { background: radial-gradient(circle at 35% 30%, #4a4f5e, #15171d 60%, #050608); }
+.gstone.s1 { background: radial-gradient(circle at 35% 30%, #fff, #f1ede4 60%, #c9c3b4); }
+.gstone.ghost { opacity: .55; box-shadow: 0 0 0 2px var(--hay); }
+.gstone.last::after { content: ""; position: absolute; inset: 38%; border-radius: 50%; background: var(--barn); }
+.gstone.win { animation: winpulse 0.9s ease-in-out infinite; }
+.hit.gcell { border-radius: 50%; }

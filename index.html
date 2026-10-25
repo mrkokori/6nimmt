@@ -24,7 +24,7 @@
 <section id="screen-home" class="screen">
   <header class="picker-head">
     <h1 class="picker-title">Spieleabend</h1>
-    <p class="tagline">Fünf Klassiker – gegen den Computer, am selben Handy oder online.</p>
+    <p class="tagline">Klassiker für zwischendurch – gegen den Computer, am selben Handy oder online.</p>
   </header>
   <div class="game-tiles">
     <button type="button" class="game-tile" data-game="sechs">
@@ -46,6 +46,18 @@
     <button type="button" class="game-tile" data-game="c4">
       <span class="tile-art art-c4" aria-hidden="true"><i class="disc y"></i><i class="disc r"></i><i class="disc y"></i><i class="disc y"></i><i class="disc r"></i><i class="disc r"></i></span>
       <span class="tile-name">Vier gewinnt</span><span class="tile-sub">Taktik · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="reversi">
+      <span class="tile-art art-reversi" aria-hidden="true"><i class="rd b"></i><i class="rd w"></i><i class="rd w"></i><i class="rd b"></i></span>
+      <span class="tile-name">Reversi</span><span class="tile-sub">Strategie · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="ttt">
+      <span class="tile-art art-ttt" aria-hidden="true"><i>✕</i><i class="o">◯</i><i>✕</i><i class="o">◯</i><i>✕</i><i></i></span>
+      <span class="tile-name">Tic-Tac-Toe</span><span class="tile-sub">Klassisch &amp; Ultimate · 2</span>
+    </button>
+    <button type="button" class="game-tile" data-game="gomoku">
+      <span class="tile-art art-gomoku" aria-hidden="true"><i class="gs b"></i><i class="gs b"></i><i class="gs b"></i><i class="gs b"></i><i class="gs w"></i></span>
+      <span class="tile-name">Gomoku</span><span class="tile-sub">Fünf in einer Reihe · 2</span>
     </button>
   </div>
   <button type="button" class="big-btn" id="home-join">Einem Raum beitreten</button>
@@ -221,6 +233,9 @@
         <button type="button" class="small-btn" id="bsetup-add-bot">+ Computer</button>
       </div>
     </div>
+    <div class="field hidden" id="bsetup-variant-field"><span id="bsetup-variant-label">Variante</span>
+      <div class="segmented" id="bsetup-variant"></div>
+    </div>
     <div class="field hidden" id="bsetup-forced-field">Schlagzwang
       <div class="segmented" id="bsetup-forced">
         <button type="button" data-value="off" class="on">Aus – schlagen ist freiwillig</button>
@@ -323,7 +338,9 @@
 <script src="lib/mqtt.min.js"></script>
 <script src="net.js"></script>
 <script src="boards.js"></script>
+<script src="boards2.js"></script>
 <script src="app.js"></script>
 <script src="boardui.js"></script>
+<script src="boardui2.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Spieleabend
 
-Fünf Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, **Dame** und **Vier gewinnt** – gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
+Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühle**, **Dame**, **Vier gewinnt**, **Reversi**, **Tic-Tac-Toe** und **Gomoku** – gegen den Computer, mit mehreren Leuten an einem Handy oder online mit Freunden. Läuft im Browser, ohne Anmeldung, nach dem ersten Öffnen auch offline.
 
 **Spiel öffnen:** https://mrkokori.github.io/6nimmt/
 
@@ -11,6 +11,9 @@ Fünf Klassiker als Web-App: **6 nimmt**, **Mensch ärgere dich nicht**, **Mühl
 - **Mühle** (2): Setzen, ziehen, springen mit drei Steinen; geschlossene Mühlen leuchten, entfernte Steine fliegen vom Brett.
 - **Dame** (2): Deutsche Regeln mit Schlagzwang, Mehrfachsprung und weit ziehenden Damen.
 - **Vier gewinnt** (2): Steine fallen mit Aufprall in die Spalte, die Viererreihe leuchtet.
+- **Reversi** (2): Steine drehen sich nacheinander um, mit Aussetzen, wenn kein Zug geht.
+- **Tic-Tac-Toe** (2): klassisch 3×3 oder „Ultimate“ – neun kleine Felder in einem großen, dein Zug bestimmt, wo der Gegner spielen muss.
+- **Gomoku** (2): Fünf in einer Reihe auf dem 15×15-Brett; einmal tippen zeigt den Stein zur Probe, nochmal tippen setzt ihn.
 
 Jedes Spiel gibt es gegen den Computer in drei Stärken (leicht, normal, schwer), am selben Handy und online. Laufende Partien gegen den Computer oder am selben Handy werden gespeichert und lassen sich fortsetzen.
 
@@ -35,6 +38,7 @@ Einstellungen, Statistik und gespeicherte Partien liegen nur lokal im Browser. B
 | `app.js` | Startseite, 6 nimmt (Oberfläche, Ablauf, Animationen), Online-Lobby |
 | `boards.js` | Brettspiele: Regeln und Computergegner, ohne Oberfläche |
 | `boardui.js` | Brettspiele: Bretter, Figuren, Animationen, Spielablauf |
+| `boards2.js`, `boardui2.js` | Reversi, Tic-Tac-Toe, Gomoku: Regeln/Computer und Oberfläche |
 | `net.js` | Online-Verbindung (Raum erstellen, beitreten, wiederverbinden) |
 | `style.css` | Gestaltung |
 | `lib/mqtt.min.js` | Verbindung zum Spieleserver (Fremdbibliothek, MIT-Lizenz) |

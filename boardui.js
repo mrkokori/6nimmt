@@ -7,6 +7,7 @@
 const BoardUI = (function () {
   const B = window.Boards;
   const GAMES = { c4: B.c4, muehle: B.muehle, dame: B.dame, madn: B.madn };
+  const SPEC = {}; // weitere Spiele melden sich über register() an (boardui2.js …)
   const MADN_COLOR_NAMES = ["Gelb", "Grün", "Rot", "Blau"];
   const SEAT_COLOR_NAMES = { c4: ["Gelb", "Rot"], muehle: ["Weiß", "Schwarz"], dame: ["Weiß", "Schwarz"] };
 
@@ -70,8 +71,19 @@ const BoardUI = (function () {
     $("bsetup-name").value = settings.name;
     const saved = store.get("sn6.bgame", null);
     $("bsetup-resume").classList.toggle("hidden", !(saved && saved.gid === setupGame && saved.state && !g.result(saved.state)));
-    $("bsetup-count-field").classList.toggle("hidden", setupGame !== "madn");
-    $("bsetup-first-field").classList.toggle("hidden", setupGame === "madn");
+    const multi = g.maxPlayers > 2;
+    $("bsetup-count-field").classList.toggle("hidden", !multi);
+    $("bsetup-first-field").classList.toggle("hidden", multi);
+    const cnt = $("bsetup-count");
+    cnt.dataset.max = String(g.maxPlayers - 1);
+    if (Number(cnt.textContent) > g.maxPlayers - 1) cnt.textContent = String(g.maxPlayers - 1);
+    const opt = SPEC[setupGame] && SPEC[setupGame].option;
+    $("bsetup-variant-field").classList.toggle("hidden", !opt);
+    if (opt) {
+      $("bsetup-variant-label").textContent = opt.label;
+      $("bsetup-variant").innerHTML = opt.choices.map(([v, l]) => `<button type="button" data-value="${v}">${l}</button>`).join("");
+      setSeg("bsetup-variant", settings[opt.key] || opt.choices[0][0]);
+    }
     $("bsetup-forced-field").classList.toggle("hidden", setupGame !== "dame");
     setSeg("bsetup-forced", settings.dameForced ? "on" : "off");
     if (!hotSeats.length || hotSeats.game !== setupGame) {
@@ -105,16 +117,19 @@ const BoardUI = (function () {
   }
 
   function colorClass(gid, seat, players) {
+    if (SPEC[gid] && SPEC[gid].colorClass) return SPEC[gid].colorClass(seat, players);
     if (gid === "madn") return "m" + B.madn.COLOR_OF[Math.max(2, Math.min(4, players))][seat];
     return (gid === "c4" ? "c" : "s") + seat;
   }
   function colorName(gid, seat, players) {
+    if (SPEC[gid] && SPEC[gid].colorName) return SPEC[gid].colorName(seat, players);
     if (gid === "madn") return MADN_COLOR_NAMES[B.madn.COLOR_OF[Math.max(2, Math.min(4, players))][seat]];
     return SEAT_COLOR_NAMES[gid][seat];
   }
 
   function wireSetup() {
     $("bsetup-mode").addEventListener("change", renderMode);
+    $("bsetup-variant").addEventListener("change", () => { const opt = SPEC[setupGame] && SPEC[setupGame].option; if (opt) { settings[opt.key] = segValue("bsetup-variant"); saveSettings(); } });
     $("bsetup-forced").addEventListener("change", () => { settings.dameForced = segValue("bsetup-forced") === "on"; saveSettings(); });
     $("bsetup-seats").addEventListener("input", (e) => { const i = e.target.dataset.i; if (i !== undefined && e.target.tagName === "INPUT") hotSeats[i].name = e.target.value; });
     $("bsetup-seats").addEventListener("change", (e) => { const i = e.target.dataset.i; if (i !== undefined && e.target.tagName === "SELECT") hotSeats[i].level = e.target.value; });
@@ -144,7 +159,7 @@ const BoardUI = (function () {
         const level = segValue("bsetup-level");
         const names = shuffleCopy(BOT_NAMES);
         const me = { name, kind: "human" };
-        if (setupGame === "madn") {
+        if (GAMES[setupGame].maxPlayers > 2) {
           seats = [me];
           for (let i = 0; i < Number($("bsetup-count").textContent); i++) seats.push({ name: names[i], kind: "bot", level });
         } else {
@@ -164,14 +179,15 @@ const BoardUI = (function () {
   }
 
   function showRules(gid) {
-    modal(GAMES[gid].name + " – Regeln", `<div class="prose">${RULES[gid]}</div>`, [{ label: "Schließen", primary: true }]);
+    modal(GAMES[gid].name + " – Regeln", `<div class="prose">${RULES[gid] || (SPEC[gid] && SPEC[gid].rules) || ""}</div>`, [{ label: "Schließen", primary: true }]);
   }
 
   // ===================================================================
   // Partie starten (Host / lokal)
   // ===================================================================
   function startHost(mode, gid, seats, net, code) {
-    const state = GAMES[gid].create({ players: seats.length, forced: gid === "dame" && !!settings.dameForced });
+    const opt = SPEC[gid] && SPEC[gid].option;
+    const state = GAMES[gid].create({ players: seats.length, forced: gid === "dame" && !!settings.dameForced, variant: opt ? settings[opt.key] || opt.choices[0][0] : undefined });
     begin({ gid, mode, seats: seats.map((s) => Object.assign({}, s)), state, net, code });
   }
 
@@ -408,7 +424,8 @@ const BoardUI = (function () {
   };
 
   function boardEl() { return $("bboard"); }
-  function unit() { const r = boardEl().getBoundingClientRect(); return r.width / GEOM[bs.gid].cols; }
+  function geomOf() { return SPEC[bs.gid] ? SPEC[bs.gid].geom(bs.state) : GEOM[bs.gid]; }
+  function unit() { const r = boardEl().getBoundingClientRect(); return r.width / geomOf().cols; }
 
   // Mitte eines Feldes in Rastereinheiten
   function center(gid, x, y) {
@@ -417,7 +434,7 @@ const BoardUI = (function () {
   }
 
   function placeEl(el, cx, cy, size) {
-    const g = GEOM[bs.gid];
+    const g = geomOf();
     el.style.left = ((cx - size / 2) / g.cols) * 100 + "%";
     el.style.top = ((cy - size / 2) / g.rows) * 100 + "%";
     el.style.width = (size / g.cols) * 100 + "%";
@@ -436,7 +453,7 @@ const BoardUI = (function () {
       pieceLayer().appendChild(el);
     }
     el.className = "piece " + cls;
-    placeEl(el, cx, cy, size || GEOM[bs.gid].size);
+    placeEl(el, cx, cy, size || geomOf().size);
     return el;
   }
 
@@ -444,6 +461,7 @@ const BoardUI = (function () {
     const gid = bs.gid;
     const b = boardEl();
     b.className = "bboard g-" + gid;
+    if (SPEC[gid]) { b.innerHTML = `${SPEC[gid].background(bs.state)}<div class="marks"></div><div class="pieces"></div><div class="hits"></div>`; return; }
     let bg = "";
     if (gid === "c4") {
       // Rahmen mit Löchern (liegt über den Steinen)
@@ -489,7 +507,8 @@ const BoardUI = (function () {
 
   function render() {
     if (!bs || $("screen-board").classList.contains("hidden")) return;
-    if (built !== bs.gid + (bs.gid === "madn" ? bs.state.players : "") + (flipped() ? "f" : "")) { build(); built = bs.gid + (bs.gid === "madn" ? bs.state.players : "") + (flipped() ? "f" : ""); }
+    const bkey = bs.gid + (bs.gid === "madn" ? bs.state.players : "") + (flipped() ? "f" : "") + (bs.state.variant || "") + (SPEC[bs.gid] && SPEC[bs.gid].buildKey ? SPEC[bs.gid].buildKey(bs.state) : "");
+    if (built !== bkey) { build(); built = bkey; }
     renderPlayers();
     renderPieces(disp || bs.state);
     renderHits();
@@ -507,6 +526,7 @@ const BoardUI = (function () {
       if (bs.gid === "muehle") info = st.hand[i] ? `${st.hand[i]} zu setzen · ${st.onBoard[i]} am Brett` : `${st.onBoard[i]} Steine am Brett`;
       else if (bs.gid === "dame") info = `${st.board.filter((p) => p && p.s === i).length} Steine`;
       else if (bs.gid === "madn") info = `Ziel ${st.pieces[i].filter((p) => p >= 40).length}/4`;
+      else if (SPEC[bs.gid] && SPEC[bs.gid].info) info = SPEC[bs.gid].info(st, i);
       else info = colorName(bs.gid, i, n);
       const cls = ["player", i === meSeat() ? "me" : "", i === cur ? "acting" : "", s.kind === "remote" && s.connected === false ? "offline" : ""].join(" ");
       return `<li class="${cls}" data-seat="${i}"><span class="pname"><i class="seat-color ${colorClass(bs.gid, i, n)}"></i>${esc(s.name)}${s.kind === "bot" ? '<span class="tag">🤖</span>' : ""}</span>` +
@@ -517,6 +537,13 @@ const BoardUI = (function () {
   function renderPieces(st) {
     const gid = bs.gid;
     const keep = new Set();
+    if (SPEC[gid]) {
+      SPEC[gid].pieces(st, (id, cls, cx, cy, size) => { keep.add(id); return ensurePiece(id, cls, cx, cy, size); });
+      pieceLayer().querySelectorAll(".piece").forEach((el) => { if (!keep.has(el.dataset.id)) el.remove(); });
+      const marks = boardEl().querySelector(".marks");
+      if (marks && SPEC[gid].marks) { marks.innerHTML = SPEC[gid].marks(st); positionAll(marks); }
+      return;
+    }
     if (gid === "c4") {
       st.grid.forEach((v, i) => {
         if (v < 0) return;
@@ -560,12 +587,14 @@ const BoardUI = (function () {
     const active = canAct();
     const gid = bs.gid;
     const hit = (cx, cy, size, attrs, cls) => {
-      const g = GEOM[gid];
+      const g = geomOf();
       return `<button type="button" class="hit ${cls || ""}" ${attrs} data-l="${((cx - size / 2) / g.cols) * 100}" data-t="${((cy - size / 2) / g.rows) * 100}" data-w="${(size / g.cols) * 100}" data-h="${(size / g.rows) * 100}"></button>`;
     };
     // Markierungen vorheriger Auswahl zurücksetzen
     pieceLayer().querySelectorAll(".piece.sel, .piece.can").forEach((el) => el.classList.remove("sel", "can"));
-    if (active) {
+    if (SPEC[gid]) {
+      html = SPEC[gid].hits(st, active, hit) || "";
+    } else if (active) {
       const legal = G().legal(st);
       if (gid === "c4") {
         legal.forEach((m) => { html += `<button type="button" class="hit col" data-col="${m.col}" aria-label="Spalte ${m.col + 1}" data-l="${(m.col / 7) * 100}" data-t="0" data-w="${100 / 7}" data-h="100"></button>`; });
@@ -603,10 +632,7 @@ const BoardUI = (function () {
       }
     }
     hits.innerHTML = html;
-    hits.querySelectorAll("[data-l]").forEach((el) => {
-      el.style.left = el.dataset.l + "%"; el.style.top = el.dataset.t + "%";
-      el.style.width = el.dataset.w + "%"; el.style.height = el.dataset.h + "%";
-    });
+    positionAll(hits);
     // Eigene ziehbare Steine leicht hervorheben
     if (active && (gid === "muehle" || gid === "dame")) {
       const st2 = bs.state;
@@ -619,6 +645,14 @@ const BoardUI = (function () {
     if (active && gid === "madn") {
       hits.querySelectorAll(".hit.own").forEach((h) => { const el = pieceEl(st.turn + "-" + h.dataset.n); if (el) el.classList.add("can"); });
     }
+  }
+
+  // Elemente mit data-l/t/w/h (Prozent) platzieren
+  function positionAll(root) {
+    root.querySelectorAll("[data-l]").forEach((el) => {
+      el.style.left = el.dataset.l + "%"; el.style.top = el.dataset.t + "%";
+      el.style.width = el.dataset.w + "%"; el.style.height = el.dataset.h + "%";
+    });
   }
 
   function renderStatus() {
@@ -635,7 +669,8 @@ const BoardUI = (function () {
     else if (!mine) text = bs.seats[cur].kind === "bot" ? `${esc(bs.seats[cur].name)} überlegt …` : `${name} dran.`;
     else {
       const you = cur === meSeat() ? "" : esc(bs.seats[cur].name) + ": ";
-      if (bs.gid === "c4") text = you + "Tippe auf eine Spalte.";
+      if (SPEC[bs.gid]) text = you + SPEC[bs.gid].status(st, cur, sel);
+      else if (bs.gid === "c4") text = you + "Tippe auf eine Spalte.";
       else if (bs.gid === "muehle") {
         if (st.remove) text = you + "Mühle! Nimm einen Stein des Gegners.";
         else if (st.hand[cur] > 0) text = you + `Setze einen Stein (${st.hand[cur]} übrig).`;
@@ -677,6 +712,7 @@ const BoardUI = (function () {
     if (!h || !canAct()) return;
     const st = bs.state;
     const legal = G().legal(st);
+    if (SPEC[bs.gid]) { SPEC[bs.gid].click(h, st, legal); return; }
     if (bs.gid === "c4") { act({ col: Number(h.dataset.col) }); return; }
     if (bs.gid === "muehle") {
       const pt = Number(h.dataset.pt);
@@ -730,7 +766,8 @@ const BoardUI = (function () {
     const gid = bs.gid;
     for (const ev of events) {
       if (pageHidden()) break;
-      const fn = ANIM[gid] && ANIM[gid][ev.type];
+      const table = ANIM[gid] || (SPEC[gid] && SPEC[gid].anim) || {};
+      const fn = table[ev.type];
       if (fn) await fn(ev, final);
     }
   }
@@ -941,5 +978,12 @@ const BoardUI = (function () {
   }
 
   wireSetup();
-  return { openSetup, startHost, hostMessage, hostLeave, clientState, netStatus, onShow, reset, statsHTML, current: () => bs, rules: RULES };
+  function register(gid, spec) { GAMES[gid] = B[gid]; SPEC[gid] = spec; }
+  const kit = {
+    get bs() { return bs; }, get disp() { return disp; }, set disp(v) { disp = v; },
+    get sel() { return sel; }, set sel(v) { sel = v; },
+    act, render, renderPlayers, ensurePiece, pieceEl, placeEl, unit, travel, fadeOut, pop, wait, setCaption, whoName, meSeat, canAct,
+    geom: geomOf, board: boardEl, positionAll, setDie, localHuman
+  };
+  return { openSetup, startHost, hostMessage, hostLeave, clientState, netStatus, onShow, reset, statsHTML, current: () => bs, rules: RULES, register, kit, spec: (gid) => SPEC[gid], games: () => Object.keys(GAMES) };
 })();

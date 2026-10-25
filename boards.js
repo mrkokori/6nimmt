@@ -614,7 +614,7 @@
     return game;
   })();
 
-  const api = { c4: C4, muehle: MUEHLE, dame: DAME, madn: MADN, clone, key };
+  const api = { c4: C4, muehle: MUEHLE, dame: DAME, madn: MADN, clone, key, util: { rand, pick, checked, search, now } };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Boards = api;
 })(typeof self !== "undefined" ? self : this);

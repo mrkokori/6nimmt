@@ -175,7 +175,14 @@ test("Online: aus der Lobby entfernter Gast bekommt Hinweis und tritt nicht wied
 async function boardStep(page) {
   if (await page.isVisible("#modal")) return;
   if (await page.isVisible("#dice-btn") && await page.isEnabled("#dice-btn")) { await page.click("#dice-btn", { force: true }).catch(() => {}); return; }
-  const tgt = await page.$$(".hits .hit.target, .hits .hit.remove, .hits .hit.col");
+  const tgt = await page.$$(".hits .hit.target, .hits .hit.remove, .hits .hit.col, .hits .hit.tcell");
+  const g = await page.$$(".hits .hit.gcell");
+  if (g.length) {
+    const at = await g[Math.floor(Math.random() * g.length)].getAttribute("data-at");
+    await page.click(`.hits .hit[data-at="${at}"]`, { force: true }).catch(() => {});
+    await page.click(`.hits .hit[data-at="${at}"]`, { force: true }).catch(() => {});
+    return;
+  }
   if (tgt.length) { await tgt[Math.floor(Math.random() * tgt.length)].click({ force: true }).catch(() => {}); return; }
   const own = await page.$$(".hits .hit.own");
   if (own.length) {
@@ -196,7 +203,7 @@ async function playBoardToEnd(pages, host, ms = 240000) {
   throw new Error("Partie nicht fertig geworden");
 }
 
-for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame", "Dame"], ["madn", "Mensch ärgere dich nicht"]]) {
+for (const [gid, label] of [["c4", "Vier gewinnt"], ["muehle", "Mühle"], ["dame", "Dame"], ["madn", "Mensch ärgere dich nicht"], ["reversi", "Reversi"], ["ttt", "Tic-Tac-Toe"], ["gomoku", "Gomoku"]]) {
   test(`${label}: gegen Computer bis zum Ende`, async ({ page }) => {
     await setup(page, "Dominic");
     await page.click(`[data-game="${gid}"]`);
@@ -257,3 +264,28 @@ for (const [gid, label, bots] of [["c4", "Vier gewinnt", 0], ["madn", "Mensch ä
     expect(host.errors.concat(guest.errors)).toEqual([]);
   });
 }
+
+test("Ultimate Tic-Tac-Toe online bis zum Ende", async ({ browser }) => {
+  test.setTimeout(300000);
+  const host = await (await browser.newContext()).newPage();
+  const guest = await (await browser.newContext()).newPage();
+  await setup(host, "Dominic");
+  await setup(guest, "Sonja");
+  await host.click('[data-game="ttt"]');
+  await host.click('#bsetup-variant button[data-value="ultimate"]');
+  await host.click('#bsetup-mode button[data-value="online"]');
+  await host.click("#bsetup-start");
+  await host.click("#online-host");
+  await expect(host.locator("#screen-lobby")).toBeVisible();
+  const code = (await host.textContent("#lobby-code")).trim();
+  await guest.click("#home-join");
+  await guest.fill("#online-code", code);
+  await guest.click("#online-join");
+  await expect(guest.locator("#lobby-game")).toHaveText("Tic-Tac-Toe");
+  await host.click("#lobby-start");
+  await expect(guest.locator("#board-info")).toHaveText("Tic-Tac-Toe");
+  expect(await guest.evaluate(() => BoardUI.current().state.variant)).toBe("ultimate");
+  const title = await playBoardToEnd([host, guest], host, 280000);
+  expect(title).toMatch(/gewinn|Unentschieden/);
+  expect(host.errors.concat(guest.errors)).toEqual([]);
+});

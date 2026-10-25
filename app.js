@@ -5,7 +5,7 @@
 // Online-Mitspieler bekommen nur ihre eigene Ansicht plus die Ereignisse.
 "use strict";
 
-const APP_VERSION = "2026.10.25.8";
+const APP_VERSION = "2026.10.25.9";
 const E = window.Engine;
 const $ = (id) => document.getElementById(id);
 const BOT_NAMES = ["Berta", "Rudi", "Liesl", "Ferdl", "Resi", "Sepp", "Gretl", "Hansi", "Mitzi", "Toni"];
@@ -117,8 +117,9 @@ document.addEventListener("click", (e) => {
 });
 // Startseite: Spiel wählen
 let onlineGame = null; // für welches Spiel ein Raum erstellt wird (null = nur beitreten)
-const GAME_NAMES = { sechs: "6 nimmt", madn: "Mensch ärgere dich nicht", muehle: "Mühle", dame: "Dame", c4: "Vier gewinnt" };
-const MAX_PLAYERS = { sechs: 10, madn: 4, muehle: 2, dame: 2, c4: 2 };
+const GAME_NAMES = { sechs: "6 nimmt" };
+const MAX_PLAYERS = { sechs: 10 };
+for (const [k, g] of Object.entries(window.Boards)) if (g && g.id === k) { GAME_NAMES[k] = g.name; MAX_PLAYERS[k] = g.maxPlayers; }
 document.addEventListener("click", (e) => {
   const tile = e.target.closest("[data-game]");
   if (tile) { if (tile.dataset.game === "sechs") show("sechs"); else BoardUI.openSetup(tile.dataset.game); }
