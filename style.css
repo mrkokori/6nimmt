@@ -516,3 +516,43 @@ input[type="text"] {
 .gstone.last::after { content: ""; position: absolute; inset: 38%; border-radius: 50%; background: var(--barn); }
 .gstone.win { animation: winpulse 0.9s ease-in-out infinite; }
 .hit.gcell { border-radius: 50%; }
+
+.bboard.custom { aspect-ratio: auto; max-width: 100%; }
+
+/* =====================================================================
+   Kniffel
+   ===================================================================== */
+.seat-color.kn0 { background: var(--m0); } .seat-color.kn1 { background: var(--m2); } .seat-color.kn2 { background: var(--m3); }
+.seat-color.kn3 { background: var(--m1); } .seat-color.kn4 { background: #b48be0; } .seat-color.kn5 { background: #ef8b68; }
+.art-kniffel { gap: 3px; }
+.art-kniffel .kd { font-style: normal; font-size: 30px; line-height: 1; color: var(--card); }
+.art-kniffel .kd:nth-child(odd) { transform: rotate(-8deg); }
+.g-kniffel { width: 100%; }
+.kn { display: flex; flex-direction: column; gap: 8px; }
+.kn-tray { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 10px; max-width: 420px; width: 100%; margin: 0 auto; background: #1f5636; border-radius: 14px; box-shadow: inset 0 0 0 3px #183c28; }
+.kn-die {
+  aspect-ratio: 1; border: 0; padding: 12%; border-radius: 18%; background: var(--card);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .35); transition: transform .15s, box-shadow .15s;
+}
+.kn-die .face { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 100%; height: 100%; gap: 6%; }
+.kn-die .face i { border-radius: 50%; }
+.kn-die .face i.pip { background: var(--card-ink); }
+.kn-die.blank { background: rgba(251, 247, 238, .25); box-shadow: none; }
+.kn-die.held { transform: translateY(-8px); box-shadow: 0 0 0 3px var(--hay), 0 10px 14px rgba(0, 0, 0, .45); }
+.kn-die:disabled { cursor: default; color: inherit; opacity: 1; }
+.kn-roll { min-height: 46px; border: 0; border-radius: 12px; background: var(--table-2); color: var(--muted); font-weight: 700; font-size: 17px; }
+.kn-roll.ready { background: var(--hay); color: var(--hay-ink); }
+.kn-sheet-wrap { overflow-x: auto; border-radius: 12px; background: var(--table-2); }
+.kn-sheet { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+.kn-sheet th, .kn-sheet td { padding: 2px 6px; height: 31px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.kn-sheet tbody th { text-align: left; font-weight: 600; color: var(--muted); }
+.kn-sheet thead th { font-size: 12px; color: var(--muted); }
+.kn-sheet thead th.cur { color: var(--hay); }
+.kn-sheet td.zero { color: var(--muted); }
+.kn-sheet td.pot.ghost { color: rgba(163, 173, 198, .5); }
+.kn-pot { min-width: 40px; min-height: 26px; border: 0; border-radius: 8px; background: rgba(233, 185, 73, .2); color: var(--hay); font-weight: 700; font-size: 14px; }
+.kn-pot:active { background: var(--hay); color: var(--hay-ink); }
+.kn-sheet tr.sum th, .kn-sheet tr.sum td { font-size: 12px; color: var(--muted); }
+.kn-sheet tr.total td, .kn-sheet tr.total th { color: var(--text); font-size: 15px; border-bottom: 0; }
+.kn-sheet .need { font-size: 11px; opacity: .7; } .kn-sheet .got { color: var(--ok); }
+#screen-board:has(.g-kniffel) .bstage { align-items: flex-start; }

@@ -3,7 +3,7 @@
   "private": true,
   "description": "Spieleabend – 6 nimmt und Brettspiele als Web-App, gegen Computer, am selben Handy oder online",
   "scripts": {
-    "test": "node tests/engine.test.js && node tests/boards.test.js && node tests/boards2.test.js",
+    "test": "node tests/engine.test.js && node tests/boards.test.js && node tests/boards2.test.js && node tests/boards3.test.js",
     "test:browser": "playwright test"
   },
   "devDependencies": {

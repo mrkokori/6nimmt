@@ -76,6 +76,7 @@ const BoardUI = (function () {
     $("bsetup-first-field").classList.toggle("hidden", multi);
     const cnt = $("bsetup-count");
     cnt.dataset.max = String(g.maxPlayers - 1);
+    cnt.dataset.min = String(Math.max(0, (g.minPlayers || 2) - 1));
     if (Number(cnt.textContent) > g.maxPlayers - 1) cnt.textContent = String(g.maxPlayers - 1);
     const opt = SPEC[setupGame] && SPEC[setupGame].option;
     $("bsetup-variant-field").classList.toggle("hidden", !opt);
@@ -389,7 +390,7 @@ const BoardUI = (function () {
   function clientState(msg) {
     const gid = msg.game;
     if (!GAMES[gid] || !msg.state || msg.state.game !== gid || !Array.isArray(msg.seats)) return;
-    const seats = msg.seats.slice(0, 4).map((p) => ({ name: String(p.name || "?").slice(0, 20), kind: p.kind === "bot" ? "bot" : "remote", level: p.level, connected: p.connected !== false }));
+    const seats = msg.seats.slice(0, 6).map((p) => ({ name: String(p.name || "?").slice(0, 20), kind: p.kind === "bot" ? "bot" : "remote", level: p.level, connected: p.connected !== false }));
     const seat = Number(msg.seat);
     const fresh = !bs || bs.mode !== "client" || bs.gid !== gid || (msg.state.ply || 0) < (bs.state.ply || 0) || (msg.state.ply === 0 && bs.state.ply > 0);
     if (fresh) {
@@ -461,6 +462,7 @@ const BoardUI = (function () {
     const gid = bs.gid;
     const b = boardEl();
     b.className = "bboard g-" + gid;
+    if (SPEC[gid] && SPEC[gid].custom) { b.className += " custom"; b.innerHTML = SPEC[gid].background(bs.state); return; }
     if (SPEC[gid]) { b.innerHTML = `${SPEC[gid].background(bs.state)}<div class="marks"></div><div class="pieces"></div><div class="hits"></div>`; return; }
     let bg = "";
     if (gid === "c4") {
@@ -510,8 +512,8 @@ const BoardUI = (function () {
     const bkey = bs.gid + (bs.gid === "madn" ? bs.state.players : "") + (flipped() ? "f" : "") + (bs.state.variant || "") + (SPEC[bs.gid] && SPEC[bs.gid].buildKey ? SPEC[bs.gid].buildKey(bs.state) : "");
     if (built !== bkey) { build(); built = bkey; }
     renderPlayers();
-    renderPieces(disp || bs.state);
-    renderHits();
+    if (SPEC[bs.gid] && SPEC[bs.gid].custom) SPEC[bs.gid].renderCustom(disp || bs.state, canAct());
+    else { renderPieces(disp || bs.state); renderHits(); }
     renderStatus();
     renderDice();
     $("board-info").textContent = G().name + (bs.gid === "dame" ? (bs.state.forced ? " · mit Schlagzwang" : " · ohne Schlagzwang") : "");
@@ -708,7 +710,7 @@ const BoardUI = (function () {
 
   // ---------- Eingaben ----------
   function boardClick(e) {
-    const h = e.target.closest(".hit");
+    const h = e.target.closest(".hit, .act");
     if (!h || !canAct()) return;
     const st = bs.state;
     const legal = G().legal(st);
