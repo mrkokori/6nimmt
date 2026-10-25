@@ -357,8 +357,10 @@ for (const [gid, label] of Object.entries(NEW_LABELS)) {
     await expect(page.locator("#bsetup-title")).toHaveText(label);
     await page.click('#bsetup-level button[data-value="easy"]');
     // Mehrspieler-Spiele: auf zwei Spieler reduzieren
-    for (let i = 0; i < 5; i++) await page.click('[data-step="bsetup-count"][data-delta="-1"]').catch(() => {});
-    if (gid === "memory" || gid === "mastermind") await page.click('[data-step="bsetup-count"][data-delta="1"]').catch(() => {});
+    if (await page.isVisible("#bsetup-count-field")) {
+      for (let i = 0; i < 5; i++) await page.click('[data-step="bsetup-count"][data-delta="-1"]', { timeout: 2000 }).catch(() => {});
+      if (gid === "memory" || gid === "mastermind") await page.click('[data-step="bsetup-count"][data-delta="1"]', { timeout: 2000 }).catch(() => {});
+    }
     await page.click("#bsetup-start");
     await expect(page.locator("#screen-board")).toBeVisible();
     const title = await playBoardToEnd([page], page, 560000);
